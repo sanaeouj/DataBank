@@ -20,8 +20,7 @@ import {
 import { auth, googleProvider } from "../firebase/firebaseAuth";
 import { useNavigate } from "react-router-dom";
 
-// Snackbar Alert Component
-const AlertSnackbar = React.forwardRef(function Alert(props, ref) {
+ const AlertSnackbar = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
@@ -43,23 +42,26 @@ const LogIn = () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       console.log("Google Log-In Success:", result.user);
-      navigate("/dashboard");
+  
+       localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userName", result.user.displayName || "User");
+  
+       navigate("/Home");
     } catch (error) {
       console.error("Google Log-In Error:", error);
       showSnackbar("Failed to log in with Google.", "error");
     }
   };
-
   const handleEmailPasswordLogIn = async (e) => {
     e.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Email Log-In Success:", userCredential.user);
-      navigate("/dashboard");
+  
+       localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userName", userCredential.user.displayName || "User");
+  
+       navigate("/Home");
     } catch (error) {
       console.error("Email Log-In Error:", error);
       showSnackbar(
@@ -102,8 +104,7 @@ const LogIn = () => {
           </Typography>
 
           <Stack spacing={2} sx={{ maxWidth: 400 }}>
-            {/* Google Log In Button */}
-            <Button
+             <Button
               fullWidth
               variant="outlined"
               onClick={handleGoogleLogIn}
@@ -250,8 +251,7 @@ const LogIn = () => {
           </Stack>
         </Box>
 
-        {/* RIGHT SIDE - IMAGE */}
-        <Box
+         <Box
           sx={{
             flex: 1,
             display: { xs: "none", md: "block" },
@@ -261,8 +261,7 @@ const LogIn = () => {
           }}
         />
 
-        {/* SNACKBAR NOTIFICATIONS */}
-        <Snackbar
+         <Snackbar
           open={snackOpen}
           autoHideDuration={4000}
           onClose={() => setSnackOpen(false)}

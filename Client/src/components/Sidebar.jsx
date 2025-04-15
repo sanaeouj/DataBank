@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Drawer,
   List,
@@ -12,7 +12,6 @@ import {
   LinearProgress,
 } from "@mui/material";
 import { NavLink } from "react-router-dom";
-
 import {
   Home as HomeIcon,
   People as PeopleIcon,
@@ -27,14 +26,20 @@ import {
   Task as TaskIcon,
 } from "@mui/icons-material";
 import Icon from "../assets/icon.png";
+
+const drawerWidth = 240;
+const miniDrawerWidth = 70;
+
 const Sidebar = () => {
-  const onboardingProgress = 0;
+  const [isOpen, setIsOpen] = useState(false);
+
+  const onboardingProgress = 40; // Exemple de progression en %
 
   const sections = [
     {
       title: "PROSPECT & ENRICH",
       items: [
-        { text: "Home", icon: <HomeIcon />, to: "/" },
+        { text: "Home", icon: <HomeIcon />, to: "/Home" },
         { text: "People", icon: <PeopleIcon />, to: "/people" },
         { text: "Companies", icon: <BusinessIcon />, to: "/companies" },
         { text: "Lists", icon: <ListAltIcon />, to: "/lists" },
@@ -66,24 +71,28 @@ const Sidebar = () => {
   return (
     <Drawer
       variant="permanent"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
       sx={{
-        width: 240,
+        width: isOpen ? drawerWidth : miniDrawerWidth,
         flexShrink: 0,
+        whiteSpace: "nowrap",
+        boxSizing: "border-box",
         "& .MuiDrawer-paper": {
-          width: 240,
-          boxSizing: "border-box",
+          width: isOpen ? drawerWidth : miniDrawerWidth,
+          transition: "width 0.3s",
+          overflowX: "hidden",
           backgroundColor: "#1e1e1e",
           color: "#fff",
         },
       }}
     >
-      <Box sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          {" "}
-          <img src={Icon} alt="Logo IntelligentB2B" style={{ width: 40 }} />
-        </Typography>
+      <Box sx={{ p: 2, display: "flex", justifyContent: isOpen ? "flex-start" : "center" }}>
+        <img src={Icon} alt="Logo IntelligentB2B" style={{ width: 40 }} />
+      </Box>
 
-         <Box
+      {isOpen && (
+        <Box
           sx={{
             display: "flex",
             alignItems: "center",
@@ -91,6 +100,7 @@ const Sidebar = () => {
             padding: "6px 12px",
             borderRadius: 2,
             mb: 2,
+            mx: 2,
             color: "#aaa",
             fontSize: "0.9rem",
           }}
@@ -100,16 +110,18 @@ const Sidebar = () => {
             Ctrl+K
           </Box>
         </Box>
-      </Box>
+      )}
 
       <Divider sx={{ borderColor: "#333" }} />
 
       <List dense>
         {sections.map((section) => (
           <Box key={section.title}>
-            <Typography sx={{ px: 2, pt: 2, fontSize: 12, color: "#888" }}>
-              {section.title}
-            </Typography>
+            {isOpen && (
+              <Typography sx={{ px: 2, pt: 2, fontSize: 12, color: "#888" }}>
+                {section.title}
+              </Typography>
+            )}
             {section.items.map(({ text, icon, to }) => (
               <ListItemButton
                 component={NavLink}
@@ -117,80 +129,85 @@ const Sidebar = () => {
                 key={text}
                 sx={{
                   color: "#fff",
+                  justifyContent: isOpen ? "initial" : "center",
+                  px: isOpen ? 2 : 1,
                   "&.active": {
                     backgroundColor: "#333",
-                    borderLeft: "4px solid #f4e33d",
-                    pl: "12px",
+                    borderLeft: isOpen ? "4px solid #f4e33d" : "none",
+                    pl: isOpen ? "12px" : 1,
                   },
                 }}
               >
-                <ListItemIcon sx={{ color: "#fff" }}>{icon}</ListItemIcon>
-                <ListItemText primary={text} />
+                <ListItemIcon
+                  sx={{
+                    color: "#fff",
+                    minWidth: 0,
+                    mr: isOpen ? 2 : "auto",
+                    justifyContent: "center",
+                    fontSize: isOpen ? "1.5rem" : "1.25rem", // Taille fixe des icônes
+                  }}
+                >
+                  {icon}
+                </ListItemIcon>
+                {isOpen && <ListItemText primary={text} />}
               </ListItemButton>
             ))}
           </Box>
         ))}
       </List>
 
-      <Box sx={{ px: 2, mt: 2 }}>
-        <Button
-          variant="contained"
-          fullWidth
-          sx={{
-            bgcolor: "#f4e33d",
-            color: "#000",
-            fontWeight: "bold",
-            mb: 2,
-            "&:hover": {
-              bgcolor: "#f2d700",
-            },
-          }}
-        >
-          Upgrade
-        </Button>
+      {isOpen && (
+        <Box sx={{ px: 2, mt: "auto", mb: 2 }}>
+          <Button
+            variant="contained"
+            fullWidth
+            sx={{
+              bgcolor: "#f4e33d",
+              color: "#000",
+              fontWeight: "bold",
+              mb: 2,
+              "&:hover": {
+                bgcolor: "#f2d700",
+              },
+            }}
+          >
+            Upgrade
+          </Button>
 
-        <Box
-          sx={{
-            bgcolor: "#2c2c2c",
-            borderRadius: 1,
-            px: 2,
-            py: 1.5,
-            mb: 2,
-            fontSize: "0.85rem",
-          }}
-        >
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography>Onboarding hub</Typography>
-            <Typography sx={{ cursor: "pointer" }}>✖</Typography>
-          </Box>
-          <Box sx={{ mt: 1 }}>
-            <LinearProgress
-              variant="determinate"
-              value={onboardingProgress}
-              sx={{
-                height: 6,
-                borderRadius: 5,
-                backgroundColor: "#444",
-                "& .MuiLinearProgress-bar": {
-                  backgroundColor: "#f4e33d",
-                },
-              }}
-            />
-            <Typography sx={{ fontSize: "0.75rem", mt: 0.5, color: "#aaa" }}>
-              {onboardingProgress}% Completed
-            </Typography>
+          <Box
+            sx={{
+              bgcolor: "#2c2c2c",
+              borderRadius: 1,
+              px: 2,
+              py: 1.5,
+              fontSize: "0.85rem",
+            }}
+          >
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography>Onboarding hub</Typography>
+              <Typography sx={{ cursor: "pointer" }}>✖</Typography>
+            </Box>
+
+            <Box sx={{ mt: 1 }}>
+              <LinearProgress
+                variant="determinate"
+                value={onboardingProgress}
+                sx={{
+                  height: 6,
+                  borderRadius: 5,
+                  backgroundColor: "#444",
+                  "& .MuiLinearProgress-bar": {
+                    backgroundColor: "#f4e33d",
+                  },
+                }}
+              />
+              <Typography sx={{ fontSize: "0.75rem", mt: 0.5, color: "#aaa" }}>
+                {onboardingProgress}% Completed
+              </Typography>
+            </Box>
           </Box>
         </Box>
-
-        <Divider sx={{ borderColor: "#333", my: 1.5 }} />
-
-        <Typography variant="body2" sx={{ mb: 0.5 }}>
-          Admin Settings
-        </Typography>
-        <Typography variant="caption" sx={{ opacity: 0.7 }}>
-          Name
-        </Typography>
-      </Box>
+      )}
     </Drawer>
   );
 };
