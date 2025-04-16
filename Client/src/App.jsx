@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import DashboardLayout from "./layouts/DashboardLayout";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
+import People from "./pages/People";
 function App() {
   return (
     <Router>
@@ -24,7 +25,7 @@ function App() {
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/home" element={<Home />} />
-          <Route path="/people" element={<div>🧑‍🤝‍🧑 People</div>} />
+          <Route path="/people" element={<div><People/></div>} />
           <Route path="/companies" element={<div>🏢 Companies</div>} />
           <Route path="/lists" element={<div>🗂 Lists</div>} />
           <Route path="/enrichment" element={<div>⚙️ Enrichment</div>} />

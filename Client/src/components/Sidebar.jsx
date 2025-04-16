@@ -33,14 +33,14 @@ const miniDrawerWidth = 70;
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onboardingProgress = 40; // Exemple de progression en %
+  const onboardingProgress = 40; 
 
   const sections = [
     {
       title: "PROSPECT & ENRICH",
       items: [
         { text: "Home", icon: <HomeIcon />, to: "/Home" },
-        { text: "People", icon: <PeopleIcon />, to: "/people" },
+        { text: "People", icon: <PeopleIcon />, to: "/People" },
         { text: "Companies", icon: <BusinessIcon />, to: "/companies" },
         { text: "Lists", icon: <ListAltIcon />, to: "/lists" },
         { text: "Data enrichment", icon: <DataUsageIcon />, to: "/enrichment" },
@@ -144,7 +144,6 @@ const Sidebar = () => {
                     minWidth: 0,
                     mr: isOpen ? 2 : "auto",
                     justifyContent: "center",
-                    fontSize: isOpen ? "1.5rem" : "1.25rem", // Taille fixe des icônes
                   }}
                 >
                   {icon}
