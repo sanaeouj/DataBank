@@ -1,22 +1,29 @@
-// File: src/pages/People.js
 import React, { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import FilterSidebar from "../components/FilterSidebar";
 import ResultsTable from "../components/ResultsTable";
-import mockContacts from "../data/mockContacts.json";
+import mockContacts from "../data/mockContacts.json"; // Assuming this is your JSON data
+import Sidebar from "../components/Sidebar";
 
 const People = () => {
   const [filters, setFilters] = useState({});
 
   return (
-    <Box>
-      <Typography variant="h5" sx={{ p: 2 }}>
-        People List
-      </Typography>
-      <Box sx={{ display: "flex" }}>
-        <FilterSidebar filters={filters} setFilters={setFilters} data={mockContacts} />
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      <Box sx={{ width: 240, flexShrink: 0 }}>
+        <Sidebar />
+      </Box>
+      <Box sx={{ display: "flex", flexGrow: 1 }}>
+        <FilterSidebar
+          filters={filters}
+          setFilters={setFilters}
+          data={mockContacts} // Pass the JSON data to FilterSidebar
+        />
         <Box sx={{ flexGrow: 1, p: 2 }}>
-          <ResultsTable data={mockContacts} filters={filters} />
+          <Typography variant="h5" sx={{ mb: 2 }}>
+            People List
+          </Typography>
+          <ResultsTable data={mockContacts} filters={filters} /> // Pass the JSON data to ResultsTable
         </Box>
       </Box>
     </Box>

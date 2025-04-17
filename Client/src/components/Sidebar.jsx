@@ -33,7 +33,7 @@ const miniDrawerWidth = 70;
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onboardingProgress = 40; 
+  const onboardingProgress = 40;
 
   const sections = [
     {
@@ -45,26 +45,6 @@ const Sidebar = () => {
         { text: "Lists", icon: <ListAltIcon />, to: "/lists" },
         { text: "Data enrichment", icon: <DataUsageIcon />, to: "/enrichment" },
       ],
-    },
-    {
-      title: "ENGAGE",
-      items: [
-        { text: "Sequences", icon: <ListAltIcon />, to: "/sequences" },
-        { text: "Emails", icon: <EmailIcon />, to: "/emails" },
-        { text: "Calls", icon: <CallIcon />, to: "/calls" },
-      ],
-    },
-    {
-      title: "WIN DEALS",
-      items: [
-        { text: "Meetings", icon: <MeetingRoomIcon />, to: "/meetings" },
-        { text: "Conversations", icon: <ChatIcon />, to: "/conversations" },
-        { text: "Deals", icon: <AttachMoneyIcon />, to: "/deals" },
-      ],
-    },
-    {
-      title: "TOOLS & AUTOMATIONS",
-      items: [{ text: "Tasks", icon: <TaskIcon />, to: "/tasks" }],
     },
   ];
 
@@ -87,7 +67,13 @@ const Sidebar = () => {
         },
       }}
     >
-      <Box sx={{ p: 2, display: "flex", justifyContent: isOpen ? "flex-start" : "center" }}>
+      <Box
+        sx={{
+          p: 2,
+          display: "flex",
+          justifyContent: isOpen ? "flex-start" : "center",
+        }}
+      >
         <img src={Icon} alt="Logo IntelligentB2B" style={{ width: 40 }} />
       </Box>
 

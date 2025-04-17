@@ -25,11 +25,7 @@ const Footer = () => {
           >
             Get Started
           </Typography>
-          <Typography variant="body2">
-            <Link href="#" underline="hover" color="inherit">
-              Sign Up for Free
-            </Link>
-          </Typography>
+       
           <Typography variant="body2">
             <Link href="#" underline="hover" color="inherit">
               Pricing

@@ -250,21 +250,7 @@ const SignUp = () => {
                 }}
               />
 
-              <Button
-                fullWidth
-                variant="contained"
-                type="submit"
-                disabled={!agreed}
-                sx={{
-                  bgcolor: agreed ? "black" : "white",
-                  color: "white",
-                  "&:hover": { bgcolor: agreed ? "black" : "white" },
-                  textTransform: "none",
-                  borderRadius: 2,
-                }}
-              >
-                Sign up
-              </Button>
+       
 
               <Divider sx={{ color: "black" }}>or</Divider>
 

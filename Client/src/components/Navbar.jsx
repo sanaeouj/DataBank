@@ -40,7 +40,7 @@ const Navbar = ({ showNavLinks = true, showSignUp = true }) => {
             </Typography>
           </Box>
 
-           {showNavLinks && (
+          {showNavLinks && (
             <Box display="flex" gap={4}>
               {["Platform", "Roles", "Resources", "Pricing"].map((item) => (
                 <Button
@@ -58,7 +58,7 @@ const Navbar = ({ showNavLinks = true, showSignUp = true }) => {
             </Box>
           )}
 
-           <Box display="flex" alignItems="center" gap={2}>
+          <Box display="flex" alignItems="center" gap={2}>
             <Button
               sx={{
                 color: "#000",
@@ -70,39 +70,24 @@ const Navbar = ({ showNavLinks = true, showSignUp = true }) => {
               Get a demo
             </Button>
 
-            <Button
-              onClick={() => navigate("/login")}
-              variant="outlined"
-              sx={{
-                textTransform: "none",
-                borderRadius: "10px",
-                color: "#000",
-                borderColor: "#000",
-                fontWeight: 500,
-                "&:hover": {
-                  backgroundColor: "#000",
-                  color: "#fff",
-                  borderColor: "#000",
-                },
-              }}
-            >
-              Log in
-            </Button>
-
             {showSignUp && (
               <Button
-                onClick={() => navigate("/SignUp")}
-                variant="contained"
+                onClick={() => navigate("/login")}
+                variant="outlined"
                 sx={{
                   textTransform: "none",
-                  backgroundColor: "#facc15",
-                  color: "#000",
                   borderRadius: "10px",
-                  fontWeight: 600,
-                  "&:hover": { backgroundColor: "#fbbf24" },
+                  color: "#000",
+                  borderColor: "#000",
+                  fontWeight: 500,
+                  "&:hover": {
+                    backgroundColor: "#000",
+                    color: "#fff",
+                    borderColor: "#000",
+                  },
                 }}
               >
-                Sign up for free
+                Log in
               </Button>
             )}
           </Box>

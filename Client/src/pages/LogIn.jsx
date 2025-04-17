@@ -239,15 +239,7 @@ const LogIn = () => {
               </Stack>
             </form>
 
-            <Typography
-              variant="body2"
-              color="gray"
-              sx={{ mt: 2, textAlign: "center", cursor: "pointer" }}
-              onClick={() => navigate("/SignUp")}
-            >
-              Don't have an account?{" "}
-              <span style={{ color: "#facc15" }}>Sign Up</span>
-            </Typography>
+          
           </Stack>
         </Box>
 
