@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
-import mockContacts from "../data/MockContacts";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -20,6 +19,7 @@ const Home = () => {
   );
   const [newTask, setNewTask] = useState("");
   const [tasks, setTasks] = useState([]);
+  const [data, setData] = useState([]); // Example data for statistics
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("userEmail");
@@ -33,6 +33,19 @@ const Home = () => {
 
     const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
     setTasks(storedTasks);
+
+    // Fetch example data for statistics
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/ressources/all");
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -41,47 +54,10 @@ const Home = () => {
     }
   }, [tasks]);
 
-  const totalClients = mockContacts.length;
-  const ClientValide = mockContacts.filter(
-    (contact) => contact.emailStatus.toLowerCase() === "valide"
-  ).length;
-  const ClientManager = mockContacts.filter(
-    (contact) => contact.title.toLowerCase() === "manager"
-  ).length;
-
-  const groupByCountryAndState = () => {
-    const locationCounts = mockContacts.reduce((acc, contact) => {
-      const country = contact.companyCountry || "Unknown Country";
-      const state = contact.companyState || "Unknown State";
-      const key = `${country} - ${state}`;
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-    return locationCounts;
-  };
-
   const calculateProgress = () => {
     if (tasks.length === 0) return 0;
     const completed = tasks.filter((task) => task.completed).length;
     return Math.round((completed / tasks.length) * 100);
-  };
-
-  const calculateCompanies = () => {
-    const uniqueCompanies = new Set(
-      mockContacts
-        .filter((contact) => contact.company && contact.company.trim() !== "")
-        .map((contact) => contact.company.trim())
-    );
-    return uniqueCompanies.size;
-  };
-
-  const groupByDepartments = () => {
-    const departmentCounts = mockContacts.reduce((acc, contact) => {
-      const department = contact.departments || "Unknown";
-      acc[department] = (acc[department] || 0) + 1;
-      return acc;
-    }, {});
-    return departmentCounts;
   };
 
   const handleLogout = () => {
@@ -111,6 +87,31 @@ const Home = () => {
   };
 
   const progress = calculateProgress();
+
+   const totalClients = data.length;
+  const ClientValide = data.filter((item) => item.EmailStatus === "Valide").length;
+  const ClientManager = data.filter((item) => item.title === "Manager").length;
+  const calculateCompanies = () => {
+    return new Set(
+      data
+        .map((item) => (typeof item.company === "string" ? item.company.toLowerCase().trim() : null))
+        .filter((company) => company) // Supprimez les valeurs null ou undefined
+    ).size+1; // Ajoutez 1 pour le client manager
+  };
+  const groupByDepartments = () => {
+    return data.reduce((acc, item) => {
+      acc[item.department] = (acc[item.department] || 0) + 1;
+      return acc;
+    }, {});
+  };
+
+  const groupByCountryAndState = () => {
+    return data.reduce((acc, item) => {
+      const location = `${item.country}, ${item.state}`;
+      acc[location] = (acc[location] || 0) + 1;
+      return acc;
+    }, {});
+  };
 
   return (
     <Box
@@ -170,10 +171,11 @@ const Home = () => {
             This is your dashboard where you can manage your onboarding tasks.
           </Typography>
 
+          {/* Statistics Section */}
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
               gap: 3,
               mt: 4,
             }}
@@ -196,7 +198,8 @@ const Home = () => {
             </Box>
           </Box>
 
-           <Box
+          {/* Distribution Section */}
+          <Box
             sx={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
@@ -227,7 +230,7 @@ const Home = () => {
             </Box>
           </Box>
 
-          {/* Tasks & Progress */}
+          {/* Tasks & Progress Section */}
           <Box sx={{ mt: "auto", pt: 4 }}>
             <Box sx={{ mt: 2 }}>
               <LinearProgress
@@ -245,91 +248,6 @@ const Home = () => {
               <Typography sx={{ fontSize: "0.75rem", mt: 0.5, color: "#aaa" }}>
                 {progress}% Completed
               </Typography>
-            </Box>
-
-            <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-              Tasks
-            </Typography>
-
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <input
-                type="text"
-                placeholder="Add a new task"
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                style={{
-                  padding: "8px",
-                  borderRadius: "4px",
-                  marginRight: "8px",
-                  width: "50%",
-                  height: "40px",
-                  fontSize: "16px",
-                  backgroundColor: "#1e1e1e",
-                  color: "white",
-                }}
-              />
-              <Button
-                variant="contained"
-                sx={{ bgcolor: "yellow", color: "black" }}
-                onClick={handleAddTask}
-              >
-                Add
-              </Button>
-            </Box>
-
-            <Box sx={{ display: "flex", flexDirection: "column" }}>
-              {tasks.map((task, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    bgcolor: "#1e1e1e",
-                    p: 2,
-                    borderRadius: 2,
-                    mb: 1,
-                    width: "100%",
-                    maxWidth: "50%",
-                  }}
-                >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={task.completed}
-                        onChange={() => toggleComplete(index)}
-                        sx={{
-                          color: "white",
-                          "&.Mui-checked": { color: "yellow" },
-                        }}
-                      />
-                    }
-                    label={
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          textDecoration: task.completed
-                            ? "line-through"
-                            : "none",
-                          color: "white",
-                        }}
-                      >
-                        {task.text}
-                      </Typography>
-                    }
-                  />
-                  <Button
-                    variant="contained"
-                    sx={{
-                      bgcolor: "black",
-                      color: "#444",
-                    }}
-                    onClick={() => handleDeleteTask(index)}
-                  >
-                    X
-                  </Button>
-                </Box>
-              ))}
             </Box>
           </Box>
         </Box>

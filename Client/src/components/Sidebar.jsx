@@ -41,6 +41,7 @@ const Sidebar = () => {
       items: [
         { text: "Home", icon: <HomeIcon />, to: "/Home" },
         { text: "People", icon: <PeopleIcon />, to: "/People" },
+        { text: "Add People", icon: <BusinessIcon />, to: "/addpeople" },
         { text: "Companies", icon: <BusinessIcon />, to: "/companies" },
         { text: "Lists", icon: <ListAltIcon />, to: "/lists" },
         { text: "Data enrichment", icon: <DataUsageIcon />, to: "/enrichment" },
@@ -64,6 +65,8 @@ const Sidebar = () => {
           overflowX: "hidden",
           backgroundColor: "#1e1e1e",
           color: "#fff",
+          fontSize: "20px",
+
         },
       }}
     >
@@ -88,7 +91,7 @@ const Sidebar = () => {
             mb: 2,
             mx: 2,
             color: "#aaa",
-            fontSize: "0.9rem",
+            fontSize: "20px",
           }}
         >
           🔍 Quick search
@@ -165,7 +168,7 @@ const Sidebar = () => {
               borderRadius: 1,
               px: 2,
               py: 1.5,
-              fontSize: "0.85rem",
+              fontSize: "18px",
             }}
           >
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>

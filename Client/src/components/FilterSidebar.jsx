@@ -15,17 +15,42 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
       ...prev,
       [name]: value,
     }));
+    const industryValues = getUniqueValues("company.industry");
+    console.log("Industry Values:", industryValues);
   };
 
-  const getUniqueValues = (key) =>
-    Array.from(new Set(data.map((item) => item[key]).filter(Boolean))).sort();
+  const getUniqueValues = (key) => {
+    if (!data || data.length === 0) {
+      console.warn("The data array is empty or undefined.");
+   
+      return [];
+    }
+
+     const values = data
+      .map((item) => key.split('.').reduce((acc, part) => acc?.[part], item))  
+      .filter((value) => value !== undefined && value !== null); 
+
+    if (values.length === 0) {
+      console.warn(`No valid values found for key "${key}". Check if the key exists in the data.`);
+    }
+
+    return Array.from(new Set(values)).sort();  
+  };
+
+  const emailStatusValues = getUniqueValues("EmailStatus");
+  const industryValues = getUniqueValues("company.industry");
+  const titleValues = getUniqueValues("title");
+  const seniorityValues = getUniqueValues("seniority");
+  const departmentValues = getUniqueValues("departments");
+  const companyValues = getUniqueValues("company.company");  
+  const cityValues = getUniqueValues("geo.city");
+  const stateValues = getUniqueValues("geo.state");
+  const countryValues = getUniqueValues("geo.country");
+
 
   const renderDropdown = (label, key, values) => (
     <FormControl key={key} fullWidth sx={{ mt: 2 }}>
-      <InputLabel
-        sx={{ color: "white", fontSize: 16 }}
-        shrink={true} 
-      >
+      <InputLabel sx={{ color: "white", fontSize: 16 }} shrink={true}>
         {label}
       </InputLabel>
       <Select
@@ -60,9 +85,9 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
         <MenuItem value="">
           <em>Aucun</em>
         </MenuItem>
-        {values.map((value) => (
-          <MenuItem key={value} value={value}>
-            {value}
+        {values.map((value, index) => (
+          <MenuItem key={`${value}-${index}`} value={value}>
+            {typeof value === "string" ? value : JSON.stringify(value)}
           </MenuItem>
         ))}
       </Select>
@@ -78,23 +103,22 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
         color: "white",
         bgcolor: "#1e1e1e",
         height: "100vh",
-        overflowY: "auto",  
+        overflowY: "auto",
       }}
     >
       <Typography variant="h6" gutterBottom sx={{ color: "white" }}>
         Filtres
       </Typography>
-      {renderDropdown("Title", "title", getUniqueValues("title"))}
-      {renderDropdown("Seniority", "seniority", getUniqueValues("seniority"))}
-      {renderDropdown("Email Status", "emailStatus", getUniqueValues("emailStatus"))}
-      {renderDropdown("Company", "company", getUniqueValues("company"))}
-      {renderDropdown("Industry", "industry", getUniqueValues("industry"))}
-      {renderDropdown("Technologies", "technologies", getUniqueValues("technologies"))}
-      {renderDropdown("City", "city", getUniqueValues("city"))}
-      {renderDropdown("Country", "country", getUniqueValues("country"))}
-      {renderDropdown("Company State", "companyState", getUniqueValues("companyState"))}
-      {renderDropdown("Company Country", "companyCountry", getUniqueValues("companyCountry"))}
-      {renderDropdown("SEO Description", "seoDescription", getUniqueValues("seoDescription"))}
+      {renderDropdown("Title", "title", titleValues)}
+
+      {renderDropdown("Email Status", "EmailStatus", emailStatusValues)}
+      {renderDropdown("Industry", "industry", industryValues)}
+      {renderDropdown("Seniority", "seniority", seniorityValues)}
+      {renderDropdown("Departments", "departments", departmentValues)}
+      {renderDropdown("Company", "company", companyValues)}  
+      {renderDropdown("City", "City", cityValues)}
+      {renderDropdown("State", "geo.state", stateValues)}
+      {renderDropdown("Country", "geo.country", countryValues)}
     </Box>
   );
 };

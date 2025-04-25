@@ -32,7 +32,7 @@ const Navbar = ({ showNavLinks = true, showSignUp = true }) => {
               variant="h6"
               sx={{
                 fontWeight: 700,
-                fontSize: "1.3rem",
+                fontSize: "18px",
                 color: "#000",
               }}
             >

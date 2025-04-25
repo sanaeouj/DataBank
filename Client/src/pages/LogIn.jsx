@@ -41,7 +41,6 @@ const LogIn = () => {
   const handleGoogleLogIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      console.log("Google Log-In Success:", result.user);
   
        localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userName", result.user.displayName || "User");
@@ -56,7 +55,6 @@ const LogIn = () => {
     e.preventDefault();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("Email Log-In Success:", userCredential.user);
   
        localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userName", userCredential.user.displayName || "User");

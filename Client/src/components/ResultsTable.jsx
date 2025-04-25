@@ -1,36 +1,105 @@
-import React from "react";
+import * as React from 'react';
 import {
   DataGrid,
   GridToolbarContainer,
   GridToolbarColumnsButton,
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
-} from "@mui/x-data-grid";
-import { Box, Menu, MenuItem, Button, Chip } from "@mui/material";
-import * as XLSX from "xlsx";
-import { BiExport } from "react-icons/bi";
+} from '@mui/x-data-grid';
+import { Menu, MenuItem, Button } from '@mui/material';
+import * as XLSX from 'xlsx';
+import { BiExport } from 'react-icons/bi';
 
-const ResultsTable = ({ data, filters }) => {
-  const filteredData = data.filter((row) =>
-    Object.entries(filters).every(([key, value]) => {
-      if (!value) return true;
-      return row[key] === value;
-    })
+const ResultsTable = ({ data = [], filters = {} }) => {
+   const getColumnsFromData = (data) => {
+    if (!data.length) return [];
+    const firstDataItem = data[0];
+    const columns = [];
+    
+    const extractFields = (obj, prefix = '') => {
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+          if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+            extractFields(obj[key], fullKey);
+          } else {
+            columns.push({
+              field: fullKey.replace(/\./g, ''),
+              headerName: fullKey.split('.').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+              width: 150,
+              renderCell: (params) => {
+                if (/Url$/i.test(fullKey)) {
+                  return (
+                    <a
+                      href={params.value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "#90caf9" }}
+                    >
+                      {params.value ? "Link" : ""}
+                    </a>
+                  );
+                }
+                return params.value !== null && params.value !== undefined ? String(params.value) : '';
+              },
+            });
+          }
+        }
+      }
+    };
+    extractFields(firstDataItem);
+    return columns;
+  };
+
+  const columns = getColumnsFromData(data);
+
+  // Flatten the data structure
+  const flattenData = (item) => {
+    const flatten = (obj, prefix = '') => {
+      let result = {};
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+          if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+            Object.assign(result, flatten(obj[key], fullKey));
+          } else {
+            result[fullKey.replace(/\./g, '')] = obj[key] !== null && obj[key] !== undefined ? String(obj[key]) : '';
+          }
+        }
+      }
+      return result;
+    };
+    return flatten(item);
+  };
+  const flattenedData = data.map(flattenData);
+
+  // Filter the data based on provided filters
+  const filteredData = flattenedData.filter((row) =>
+    Object.entries(filters).every(([key, value]) => !value || row[key] === value)
   );
 
-  const exportToExcel = () => {
+   const exportToExcel = () => {
+    if (!filteredData.length) {
+      alert("No data to export.");
+      return;
+    }
     const worksheet = XLSX.utils.json_to_sheet(filteredData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Results");
     XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
   };
 
-  const exportToCSV = () => {
+   const exportToCSV = () => {
+    if (!filteredData.length) {
+      alert("No data to export.");
+      return;
+    }
+    const headers = Object.keys(filteredData[0]);
     const csvContent = [
-      Object.keys(filteredData[0]).join(","),
-      ...filteredData.map((row) => Object.values(row).join(",")),
+      headers.join(","),
+      ...filteredData.map((row) => headers.map((header) => `"${row[header] !== undefined && row[header] !== null ? String(row[header]).replace(/"/g, '""') : ""}"`).join(","))
     ].join("\n");
-
+    
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -38,17 +107,19 @@ const ResultsTable = ({ data, filters }) => {
     link.click();
   };
 
+  // Custom toolbar component
   const CustomToolbar = () => {
     const [anchorEl, setAnchorEl] = React.useState(null);
+    
     const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
     const handleMenuClose = () => setAnchorEl(null);
-
+    
     return (
       <GridToolbarContainer>
         <GridToolbarColumnsButton />
         <GridToolbarFilterButton />
         <GridToolbarDensitySelector />
-        <Button onClick={handleMenuOpen} style={{ color: "white" }}>
+        <Button onClick={handleMenuOpen} style={{ color: "black" }}>
           <BiExport /> Export
         </Button>
         <Menu
@@ -80,7 +151,7 @@ const ResultsTable = ({ data, filters }) => {
   return (
     <div
       style={{
-        height: "100vh",
+        height: "100%",
         width: "100%",
         overflowX: "auto",
         backgroundColor: "black",
@@ -89,201 +160,20 @@ const ResultsTable = ({ data, filters }) => {
     >
       <DataGrid
         rows={filteredData}
-        columns={[
-          { field: "firstName", headerName: "First Name", width: 120 },
-          { field: "lastName", headerName: "Last Name", width: 120 },
-          { field: "title", headerName: "Title",  width: 200 },
-          { field: "seniority", headerName: "Seniority", width: 120 },
-          { field: "departments", headerName: "Departments", width: 150 },
-          { field: "company", headerName: "Company", width: 180 },
-          { field: "email", headerName: "Email", width: 220 },
-          { field: "emailStatus", headerName: "Email Status", width: 150 },
-          { field: "mobilePhone", headerName: "Mobile Phone", flex: 2, width: 150 },
-          {
-            field: "corporatePhone",
-            headerName: "Corporate Phone",
-            width: 150,
-          },
-          {
-            field: "numEmployees",
-            headerName: "Number of Employees",
-            width: 180,
-          },
-          { field: "industry", headerName: "Industry", width: 150 },
-          {
-            field: "personLinkedinUrl",
-            headerName: "LinkedIn Profile",
-            width: 250,
-            renderCell: (params) => (
-              <a
-                href={params.value}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#90caf9" }}
-              >
-                LinkedIn
-              </a>
-            ),
-          },
-          {
-            field: "website",
-            headerName: "Website",
-            width: 200,
-            renderCell: (params) => (
-              <a
-                href={params.value}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#90caf9" }}
-              >
-                {params.value}
-              </a>
-            ),
-          },
-          {
-            field: "companyLinkedinUrl",
-            headerName: "Company LinkedIn",
-            width: 250,
-            renderCell: (params) => (
-              <a
-                href={params.value}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#90caf9" }}
-              >
-                LinkedIn
-              </a>
-            ),
-          },
-          {
-            field: "facebookUrl",
-            headerName: "Facebook",
-            width: 200,
-            renderCell: (params) => (
-              <a
-                href={params.value}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#90caf9" }}
-              >
-                Facebook
-              </a>
-            ),
-          },
-          {
-            field: "twitterUrl",
-            headerName: "Twitter",
-            width: 200,
-            renderCell: (params) => (
-              <a
-                href={params.value}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#90caf9" }}
-              >
-                Twitter
-              </a>
-            ),
-          },
-          {
-            field: "companyAddress",
-            headerName: "Company Address",
-            width: 250,
-          },
-          { field: "companyCity", headerName: "Company City", width: 150 },
-          { field: "companyState", headerName: "Company State", width: 150 },
-          { field: "city", headerName: "City", width: 100 },
-          { field: "state", headerName: "State", width: 100 },
-          { field: "country", headerName: "Country", width: 100 },
-          {
-            field: "keywords",
-            headerName: "Keywords",
-            width: 200,
-            renderCell: (params) => (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 0.5,
-                  color: "white",
-                }}
-              >
-                {Array.isArray(params.value) ? (
-                  params.value.map((kw, idx) => (
-                    <Chip
-                      key={idx}
-                      label={kw}
-                      size="small"
-                      sx={{
-                        backgroundColor: "gray",
-                        color: "white ",
-                        fontSize: "16px",
-                      }}
-                    />
-                  ))
-                ) : (
-                  <span>No keywords available</span> // Affiche un message si ce n'est pas un tableau
-                )}
-              </Box>
-            ),
-          },
-          
-          { field: "companyNameForEmails", headerName: "Company Name for Emails", width: 200 },
-          { field: "companyCountry", headerName: "Company Country", width: 150 },
-          { field: "seoDescription", headerName: "SEO Description", width: 250 },
-          {
-            field: "technologies",
-            headerName: "Technologies",
-            width: 200,
-            renderCell: (params) => (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 0.5,
-                  color: "white",
-                }}
-              >
-                {Array.isArray(params.value) ? (
-                  params.value.map((tech, idx) => (
-                    <Chip
-                      key={idx}
-                      label={tech}
-                      size="small"
-                      sx={{
-                        backgroundColor: "gray",
-                        color: "white",
-                        fontSize: "16px",
-                      }}
-                    />
-                  ))
-                ) : (
-                  <span>No technologies available</span> // Fallback message
-                )}
-              </Box>
-            ),
-          },
-          { field: "annualRevenue", headerName: "Annual Revenue", width: 180 },
-          { field: "totalFunding", headerName: "Total Funding", width: 180 },
-          { field: "latestFunding", headerName: "Latest Funding", width: 180 },
-          { field: "latestFundingAmount", headerName: "Latest Funding Amount", width: 200 },
-          { field: "lastRaisedAt", headerName: "Last Raised At", width: 180 },
-          { field: "primaryEmailSource", headerName: "Primary Email Source", width: 200 },
-          { field: "secondaryEmail", headerName: "Secondary Email", width: 200 },
-          { field: "secondaryEmailSource", headerName: "Secondary Email Source", width: 200 },
-          { field: "tertiaryEmail", headerName: "Tertiary Email", width: 200 },
-          { field: "tertiaryEmailSource", headerName: "Tertiary Email Source", width: 200 },
-        ]}
+        columns={columns}
+        getRowId={(row) => row.personalid || Math.random()}
         pageSize={10}
-        rowHeight={80}
+        rowsPerPageOptions={[5, 10, 20]}
         checkboxSelection
         disableRowSelectionOnClick
         initialState={{
           sorting: {
-            sortModel: [{ field: "firstName", sort: "desc" }],
+            sortModel: [{ field: "firstname", sort: "asc" }],
           },
         }}
-        slots={{ toolbar: CustomToolbar }}
+        components={{
+          Toolbar: CustomToolbar,
+        }}
         sx={{
           fontSize: "18px",
           color: "white",
