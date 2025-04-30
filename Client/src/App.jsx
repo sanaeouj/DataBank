@@ -11,9 +11,11 @@ import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./layouts/DashboardLayout";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
- import People from "./pages/People"; 
+ import Peoples from "./pages/Peoples"; 
  import AddPeople from "./pages/AddPeople";
-function App() {
+ import UpdateUser from "./pages/UpdateUser";
+ import Companies from "./pages/Companies";
+ function App() {
   return (
     <Router>
       <Routes>
@@ -21,12 +23,12 @@ function App() {
         <Route path="/login" element={<LogIn />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/people" element={<div><People/></div>} />
+        <Route path="/people" element={<div><Peoples/></div>} />
+        <Route path="/AddPeople" element={<div> <AddPeople/>   </div>} />
+        <Route path="/UpdateUser" element={<div>🗂  <UpdateUser/>  </div>} />
+        <Route path="/companies" element={<div> <Companies/>  </div>} />
 
-        {/* Routes protégées avec layout commun */}
-        <Route element={<DashboardLayout />}>
-          <Route path="/companies" element={<div> <AddPeople/>   </div>} />
-          <Route path="/lists" element={<div>🗂 Lists</div>} />
+         <Route element={<DashboardLayout />}>
        
         </Route>
       </Routes>

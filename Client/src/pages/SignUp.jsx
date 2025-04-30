@@ -42,11 +42,9 @@ const SignUp = () => {
     }
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      console.log("Google Sign-In Success:", result.user);
-      window.location.href = "/dashboard";
+       window.location.href = "/dashboard";
     } catch (error) {
-      console.error("Google Sign-In Error:", error);
-      setError("Failed to sign in with Google.");
+       setError("Failed to sign in with Google.");
     }
   };
 
@@ -72,8 +70,7 @@ const SignUp = () => {
         password
       );
 
-      console.log("Sign-Up Success:", userCredential.user);
-      setSuccess("Account created successfully! Redirecting...");
+       setSuccess("Account created successfully! Redirecting...");
       setTimeout(() => {
         window.location.href = "/login";
       }, 2000);

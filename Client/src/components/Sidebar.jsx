@@ -17,13 +17,9 @@ import {
   People as PeopleIcon,
   Business as BusinessIcon,
   ListAlt as ListAltIcon,
-  DataUsage as DataUsageIcon,
-  Email as EmailIcon,
-  Call as CallIcon,
-  MeetingRoom as MeetingRoomIcon,
-  Chat as ChatIcon,
-  AttachMoney as AttachMoneyIcon,
-  Task as TaskIcon,
+  PersonAdd  as PersonAddIcon ,
+  BrowserUpdated as BrowserUpdatedIcon,
+ 
 } from "@mui/icons-material";
 import Icon from "../assets/icon.png";
 
@@ -41,11 +37,11 @@ const Sidebar = () => {
       items: [
         { text: "Home", icon: <HomeIcon />, to: "/Home" },
         { text: "People", icon: <PeopleIcon />, to: "/People" },
-        { text: "Add People", icon: <BusinessIcon />, to: "/addpeople" },
+        { text: "Add People", icon: <PersonAddIcon />, to: "/addpeople" },
+         { text: "Update User", icon: <BrowserUpdatedIcon />, to: "/updateuser" },
         { text: "Companies", icon: <BusinessIcon />, to: "/companies" },
         { text: "Lists", icon: <ListAltIcon />, to: "/lists" },
-        { text: "Data enrichment", icon: <DataUsageIcon />, to: "/enrichment" },
-      ],
+       ],
     },
   ];
 

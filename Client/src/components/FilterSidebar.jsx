@@ -15,26 +15,29 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
       ...prev,
       [name]: value,
     }));
-    const industryValues = getUniqueValues("company.industry");
-    console.log("Industry Values:", industryValues);
   };
 
   const getUniqueValues = (key) => {
+  
     if (!data || data.length === 0) {
       console.warn("The data array is empty or undefined.");
-   
       return [];
     }
 
-     const values = data
-      .map((item) => key.split('.').reduce((acc, part) => acc?.[part], item))  
-      .filter((value) => value !== undefined && value !== null); 
+    const values = data
+      .map((item) => {
+        const keys = key.split(".");
+        return keys.reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), item);
+      })
+      .filter((value) => value !== undefined && value !== null);
 
     if (values.length === 0) {
-      console.warn(`No valid values found for key "${key}". Check if the key exists in the data.`);
+      console.warn(
+        `No valid values found for key "${key}". Check if the key exists in the data.`
+      );
     }
 
-    return Array.from(new Set(values)).sort();  
+    return Array.from(new Set(values)).sort();
   };
 
   const emailStatusValues = getUniqueValues("EmailStatus");
@@ -42,11 +45,10 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
   const titleValues = getUniqueValues("title");
   const seniorityValues = getUniqueValues("seniority");
   const departmentValues = getUniqueValues("departments");
-  const companyValues = getUniqueValues("company.company");  
-  const cityValues = getUniqueValues("geo.city");
+  const companyValues = getUniqueValues("company.company");
+  const cityValues = getUniqueValues("geo.city"); 
   const stateValues = getUniqueValues("geo.state");
   const countryValues = getUniqueValues("geo.country");
-
 
   const renderDropdown = (label, key, values) => (
     <FormControl key={key} fullWidth sx={{ mt: 2 }}>
@@ -112,11 +114,11 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
       {renderDropdown("Title", "title", titleValues)}
 
       {renderDropdown("Email Status", "EmailStatus", emailStatusValues)}
-      {renderDropdown("Industry", "industry", industryValues)}
+      {renderDropdown("Industry", "company.industry", industryValues)}
       {renderDropdown("Seniority", "seniority", seniorityValues)}
       {renderDropdown("Departments", "departments", departmentValues)}
-      {renderDropdown("Company", "company", companyValues)}  
-      {renderDropdown("City", "City", cityValues)}
+      {renderDropdown("Company", "company", companyValues)}
+      {renderDropdown("City", "geo.city", cityValues)}
       {renderDropdown("State", "geo.state", stateValues)}
       {renderDropdown("Country", "geo.country", countryValues)}
     </Box>

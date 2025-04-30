@@ -34,16 +34,15 @@ const Home = () => {
     const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
     setTasks(storedTasks);
 
-    // Fetch example data for statistics
     const fetchData = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/ressources/all");
         const result = await response.json();
-        setData(result);
+         setData(result);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Erreur lors de la récupération des données :", error);
       }
-    };
+   };
 
     fetchData();
   }, []);

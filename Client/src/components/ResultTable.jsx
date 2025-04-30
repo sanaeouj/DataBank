@@ -24,7 +24,7 @@ const ResultTable = ({ data = [], filters }) => {
   const [filterValues, setFilterValues] = useState({});
   const [pageSize, setPageSize] = useState(10);
   const [visibleColumns, setVisibleColumns] = useState([]);
-  const hiddenColumns = [
+   const hiddenColumns = [
     "personalid",
     "companycompanyid",
     "companypersonalid",
@@ -48,61 +48,61 @@ const ResultTable = ({ data = [], filters }) => {
   }, [data]);
 
   const getColumnsFromData = (data) => {
-    if (!data.length) return [];
+    console.log("data", data);
+    if (!data || !data.length) return [];
     const columns = [];
+    const headerMapping = {
+      'mobilePhone': 'Mobile Phone',
+       'EmailStatus': 'Email Status',
+      'company.company': 'Company',
+      'company.email': 'Company Email',
+      'company.phone': 'Company Phone',
+      'company.employees': 'Company Employees',
+      'company.industry': 'Industry',
+      'company.SEO Description': 'SEO Description',
+      'company.Annual Revenue': 'Annual Revenue',
+      'company.Total Funding': 'Total Funding',
+      'geo.address': 'Address',
+       'geo.city': 'City',
+      'geo.state': 'State',
+      'geo.country': 'Country',
+      'social.Company Linkedin Url': 'LinkedIn',
+      'social.Facebook Url': 'Facebook',
+      'social.Twitter Url': 'Twitter',
+      'revenue.Total Funding': 'Total Funding',
+       'revenue.Annual Revenue': 'Annual Revenue',    
+       'revenue.Latest Funding Amount': 'Latest Funding Amount',
+      'revenue.Latest Funding': 'Latest Funding',
 
+    };
+  
     const extractFields = (obj, prefix = "") => {
       for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
           const fullKey = prefix ? `${prefix}.${key}` : key;
-          if (!hiddenColumns.includes(fullKey.replace(/\./g, ""))) {
-            if (
-              obj[key] &&
-              typeof obj[key] === "object" &&
-              !Array.isArray(obj[key])
-            ) {
-              extractFields(obj[key], fullKey);
+          
+           if (!hiddenColumns.includes(fullKey.replace(/\./g, ""))) {
+            if (typeof obj[key] === "object" && obj[key] !== null && !Array.isArray(obj[key])) {
+              extractFields(obj[key], fullKey);  
             } else {
-              const customHeaderNames = {
-                companycompany: "Company",
-                "companyCompany Email": "Company Email",
-                "companyCompany Phone": "Company Phone",
-                "SEO Description": "SEO Description",
-                geoaddress: "Address",
-                geocity: "City",
-                geostate: "State",
-                geocountry: "Country",
-                geolocation: "Location",
-              };
               columns.push({
-                field: fullKey.replace(/\./g, ""),
-                headerName:
-                  customHeaderNames[fullKey.replace(/\./g, "").toLowerCase()] ||
-                  fullKey
-                    .split(".")
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" "),
+                field: fullKey.replace(/\./g, ""), 
+                headerName: headerMapping[fullKey] || fullKey.split(".").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" "),
                 width: 200,
                 renderCell: (params) =>
                   /Url$/i.test(fullKey) ? (
-                    <a
-                      href={params.value}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "#90caf9" }}
-                    >
+                    <a href={params.value} target="_blank" rel="noopener noreferrer" style={{ color: "#90caf9" }}>
                       {params.value ? "Link" : ""}
                     </a>
-                  ) : (
-                    params.value || ""
-                  ),
+                  ) : (params.value || "N/A"),
               });
             }
           }
         }
       }
     };
-    extractFields(data[0]);
+    
+    extractFields(data[0]); 
     return columns;
   };
   const calculateTableWidth = () => {
@@ -113,42 +113,41 @@ const ResultTable = ({ data = [], filters }) => {
     return Math.max(totalWidth, window.innerWidth);
   };
   const flattenData = (data) =>
-    data.map((item) => {
-      const flatten = (obj, prefix = "") => {
-        let result = {};
-        for (const key in obj) {
-          if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            const fullKey = prefix ? `${prefix}.${key}` : key;
-            if (
-              obj[key] &&
-              typeof obj[key] === "object" &&
-              !Array.isArray(obj[key])
-            ) {
-              Object.assign(result, flatten(obj[key], fullKey));
-            } else {
-              result[fullKey.replace(/\./g, "")] = obj[key] || "";
+      data.map((item) => {
+        const flatten = (obj, prefix = "") => {
+          let result = {};
+          for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+              const fullKey = prefix ? `${prefix}.${key}` : key;
+              if (
+                obj[key] &&
+                typeof obj[key] === "object" &&
+                !Array.isArray(obj[key])
+              ) {
+                Object.assign(result, flatten(obj[key], fullKey));
+              } else {
+                result[fullKey.replace(/\./g, "")] = obj[key] !== undefined ? obj[key] : "N/A";
+              }
             }
           }
-        }
-        return result;
-      };
-      return flatten(item);
+          return result;
+        };
+        return flatten(item);
+      });
+  
+
+  const filteredData = flattenData(data).filter((row) => {
+    return Object.entries(filterValues).every(([key, value]) => {
+      if (!value) return true;
+      
+      const itemValue = key.includes(".")
+        ? key.split(".").reduce((acc, part) => acc?.[part], row)
+        : row[key];
+        
+  
+      return itemValue ? itemValue.toString().toLowerCase().includes(value.toLowerCase()) : false;
     });
-
-  const filteredData = flattenData(data).filter((row) =>
-    Object.entries(filterValues).every(
-      ([key, value]) =>
-        !value || row[key].toLowerCase().includes(value.toLowerCase())
-    )
-  );
-
-  const exportToExcel = () => {
-    if (!filteredData.length) return alert("No data to export.");
-    const worksheet = XLSX.utils.json_to_sheet(filteredData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Results");
-    XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
-  };
+  });
 
   const exportToCSV = () => {
     if (!filteredData.length) {
@@ -181,6 +180,19 @@ const ResultTable = ({ data = [], filters }) => {
       link.click();
       document.body.removeChild(link);
     }
+  };
+
+  const exportToExcel = () => {
+    if (!filteredData.length) {
+      alert("No data to export.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+    XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
   };
 
   const CustomToolbar = () => {
@@ -285,9 +297,11 @@ const ResultTable = ({ data = [], filters }) => {
   );
 
   const displayedColumns = getColumnsFromData(data).filter(
-    (col) => visibleColumns.find((vCol) => vCol.field === col.field)?.visible
+    (col) => {
+      const visibleCol = visibleColumns.find(vCol => vCol.field === col.field);
+      return visibleCol ? visibleCol.visible : true;  
+    }
   );
-
   return (
     <div
       style={{
@@ -299,14 +313,15 @@ const ResultTable = ({ data = [], filters }) => {
     >
       <CustomToolbar />
       <DataGrid
-        rows={filteredData}
-        columns={displayedColumns}
-        getRowId={(row) => row.personalid || Math.random()}
-        pageSize={pageSize}
-        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-        rowsPerPageOptions={[5, 10, 20, 100]} 
-        checkboxSelection
-        disableRowSelectionOnClick
+  rows={filteredData}  
+  columns={displayedColumns}  
+  getRowId={(row) => row.personalid || Math.random()}  
+  pageSize={pageSize}
+  onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+  rowsPerPageOptions={[5, 10, 20, 100]}
+  checkboxSelection
+  disableRowSelectionOnClick
+  
         sx={{
           fontSize: "20px",
           height: "100%",
