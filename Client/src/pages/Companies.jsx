@@ -12,20 +12,17 @@ const Companies = () => {
       const response = await axios.get("http://localhost:3000/api/companies");
       const companies = response.data;
 
-      // Compte les occurrences pour chaque nom d'entreprise
-      const companyCount = {};
+       const companyCount = {};
 
-      // Compte les occurrences
-      companies.forEach(company => {
+       companies.forEach(company => {
         companyCount[company.company] = (companyCount[company.company] || 0) + 1;
       });
 
-      // Crée une liste des entreprises uniques tout en ajoutant le count
-      const uniqueCompanies = Object.keys(companyCount).map(companyName => {
+       const uniqueCompanies = Object.keys(companyCount).map(companyName => {
         const firstOccurrence = companies.find(company => company.company === companyName);
         return {
           ...firstOccurrence,
-          count: companyCount[companyName], // Ajoute le count
+          count: companyCount[companyName],  
         };
       });
 
@@ -45,14 +42,14 @@ const Companies = () => {
     { field: "Phone", headerName: "Phone", width: 150 },
     { field: "Email", headerName: "Email", width: 300 },
     { field: "employees", headerName: "Employees", width: 200 },
-    { field: "count", headerName: "Count People", width: 150 },  // Colonne pour le compte
+    { field: "count", headerName: "Count People", width: 150 },   
     { field: "SEO Description", headerName: "SEO Description", flex: 1 },
   ];
 
   return (
     <div style={{ display: "flex",width: "100vw", height: "100vh" }}>
       <Sidebar />
-      <div style={{ flexGrow: 1, padding: "20px", backgroundColor: "black", color: "white" }}>
+      <div style={{ flexGrow: 1, padding: "20px", backgroundColor: "#1e1e1e", color: "white" }}>
         <Typography variant="h5" sx={{ mb: 2 }}>
           Company Data
         </Typography>
@@ -67,33 +64,33 @@ const Companies = () => {
               fontSize: "20px",
               height: "100%",
               overflowX: "auto",
-              backgroundColor: "black",
+              backgroundColor: "#1e1e1e",
               color: "white",
                "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "black",
+                backgroundColor: "#1e1e1e",
                 color: "white",
                 fontWeight: "bold",
               },
-              "& .MuiDataGrid-row": { backgroundColor: "black", color: "white" },
+              "& .MuiDataGrid-row": { backgroundColor: "#1e1e1e", color: "white" },
               "& .MuiDataGrid-row:hover": {
-                backgroundColor: "black",
+                backgroundColor: "#1e1e1e",
                 color: "white",
               },
               "& .MuiDataGrid-footerContainer": {
-                backgroundColor: "black",
+                backgroundColor: "#1e1e1e",
                 color: "white",
               },
-              "& .MuiDataGrid-filler": { backgroundColor: "black", color: "white" },
+              "& .MuiDataGrid-filler": { backgroundColor: "#1e1e1e", color: "white" },
               "& .MuiDataGrid-cell:hover": {
-                backgroundColor: "black",
+                backgroundColor: "#1e1e1e",
                 color: "white",
               },
               "& .MuiDataGrid-footerCell": {
-                backgroundColor: "black",
+                backgroundColor: "#1e1e1e",
                 color: "white",
               },
               "& .MuiDataGrid-columnHeader": {
-                backgroundColor: "black",
+                backgroundColor: "#1e1e1e",
                 color: "white",
                 fontWeight: "bold",
               },
@@ -121,7 +118,7 @@ const Companies = () => {
                 color: "white",
               },
               "& .MuiDataGrid-cell": {
-                backgroundColor: "black",
+                backgroundColor: "#1e1e1e",
                 color: "white",
            
               },

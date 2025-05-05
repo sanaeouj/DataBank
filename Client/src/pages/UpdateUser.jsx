@@ -199,7 +199,7 @@ const UpdateUser = () => {
   return (
     <div style={{ display: "flex" }}>
       <Sidebar />
-      <div style={{ flexGrow: 1, padding: "20px", backgroundColor: "black", color: "white" }}>
+      <div style={{ flexGrow: 1, padding: "20px", backgroundColor: "#1e1e1e", color: "white" }}>
         <Typography variant="h5" sx={{ mb: 2, color: "white" }}>
           User Data
         </Typography>
@@ -212,7 +212,7 @@ const UpdateUser = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{ style: { color: "white" } }}
             InputLabelProps={{ style: { color: "white" } }}
-            sx={{ backgroundColor: "black", width: '100%', maxWidth: 400 }}
+            sx={{ backgroundColor: "#1e1e1e", width: '100%', maxWidth: 400 }}
           />
         </Box>
         <DataGrid
@@ -227,33 +227,33 @@ const UpdateUser = () => {
             fontSize: "20px",
             height: "100%",
             overflowX: "auto",
-            backgroundColor: "black",
+            backgroundColor: "#1e1e1e",
             color: "white",
              "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "black",
+              backgroundColor: "#1e1e1e",
               color: "white",
               fontWeight: "bold",
             },
-            "& .MuiDataGrid-row": { backgroundColor: "black", color: "white" },
+            "& .MuiDataGrid-row": { backgroundColor: "#1e1e1e", color: "white" },
             "& .MuiDataGrid-row:hover": {
-              backgroundColor: "black",
+              backgroundColor: "#1e1e1e",
               color: "white",
             },
             "& .MuiDataGrid-footerContainer": {
-              backgroundColor: "black",
+              backgroundColor: "#1e1e1e",
               color: "white",
             },
-            "& .MuiDataGrid-filler": { backgroundColor: "black", color: "white" },
+            "& .MuiDataGrid-filler": { backgroundColor: "#1e1e1e", color: "white" },
             "& .MuiDataGrid-cell:hover": {
-              backgroundColor: "black",
+              backgroundColor: "#1e1e1e",
               color: "white",
             },
             "& .MuiDataGrid-footerCell": {
-              backgroundColor: "black",
+              backgroundColor: "#1e1e1e",
               color: "white",
             },
             "& .MuiDataGrid-columnHeader": {
-              backgroundColor: "black",
+              backgroundColor: "#1e1e1e",
               color: "white",
               fontWeight: "bold",
             },
@@ -281,7 +281,7 @@ const UpdateUser = () => {
               color: "white",
             },
             "& .MuiDataGrid-cell": {
-              backgroundColor: "black",
+              backgroundColor: "#1e1e1e",
               color: "white",
               display: "flex",
               alignItems: "center",
@@ -293,12 +293,12 @@ const UpdateUser = () => {
         <Dialog
           open={editDialogOpen}
           onClose={() => setEditDialogOpen(false)}
-          sx={{ backgroundColor: "black" }}
+          sx={{ backgroundColor: "#1e1e1e" }}
         >
-          <DialogTitle style={{ backgroundColor: "black", color: "white" }}>
+          <DialogTitle style={{ backgroundColor: "#1e1e1e", color: "white" }}>
             Edit Row
           </DialogTitle>
-          <DialogContent style={{ backgroundColor: "black", color: "white" }}>
+          <DialogContent style={{ backgroundColor: "#1e1e1e", color: "white" }}>
             {selectedRow &&
               Object.keys(selectedRow).map((key) => (
                 <TextField
@@ -315,11 +315,11 @@ const UpdateUser = () => {
                   margin="dense"
                   InputProps={{ style: { color: "white" } }}
                   InputLabelProps={{ style: { color: "white" } }}
-                  style={{ backgroundColor: "black" }}
+                  style={{ backgroundColor: "#1e1e1e" }}
                 />
               ))}
           </DialogContent>
-          <DialogActions style={{ backgroundColor: "black", color: "white" }}>
+          <DialogActions style={{ backgroundColor: "#1e1e1e", color: "white" }}>
             <Button onClick={() => setEditDialogOpen(false)} style={{ color: "white" }}>
               Cancel
             </Button>

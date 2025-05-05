@@ -223,7 +223,7 @@ const LogIn = () => {
                   fullWidth
                   sx={{
                     bgcolor: "#facc15",
-                    color: "black",
+                    color: "#1e1e1e",
                     fontWeight: "bold",
                     borderRadius: 2,
                     textTransform: "none",

@@ -89,7 +89,7 @@ const SignUp = () => {
           height: "100vh",
           display: "flex",
           flexDirection: "row",
-          color: "black",
+          color: "#1e1e1e",
           backgroundColor: "#D1CECB",
         }}
       >
@@ -109,12 +109,12 @@ const SignUp = () => {
         >
           <Typography
             variant="h3"
-            sx={{ fontWeight: "bold", mb: 2, color: "black" }}
+            sx={{ fontWeight: "bold", mb: 2, color: "#1e1e1e" }}
           >
             Sign up for IntelligentB2B — free forever
           </Typography>
 
-          <Typography variant="body1" sx={{ mb: 3, color: "black" }}>
+          <Typography variant="body1" sx={{ mb: 3, color: "#1e1e1e" }}>
             AI-powered sales engine to reach and convert your ideal buyers from
             a database of over 210 million contacts.
           </Typography>
@@ -129,13 +129,13 @@ const SignUp = () => {
                 />
               }
               label={
-                <Typography variant="body2" sx={{ color: "black" }}>
+                <Typography variant="body2" sx={{ color: "#1e1e1e" }}>
                   By signing up, I agree to the{" "}
-                  <a href="#" style={{ color: "black" }}>
+                  <a href="#" style={{ color: "#1e1e1e" }}>
                     Terms of Service
                   </a>{" "}
                   and{" "}
-                  <a href="#" style={{ color: "black" }}>
+                  <a href="#" style={{ color: "#1e1e1e" }}>
                     Privacy Policy
                   </a>
                   .
@@ -167,10 +167,10 @@ const SignUp = () => {
                     variant="outlined"
                     value={email}
                     autoComplete="off"
-                    InputLabelProps={{ style: { color: "black" } }}
+                    InputLabelProps={{ style: { color: "#1e1e1e" } }}
                     InputProps={{
                       ...params.InputProps,
-                      style: { color: "black", backgroundColor: "white" },
+                      style: { color: "#1e1e1e", backgroundColor: "white" },
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
@@ -192,9 +192,9 @@ const SignUp = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="off"
-                InputLabelProps={{ style: { color: "black" } }}
+                InputLabelProps={{ style: { color: "#1e1e1e" } }}
                 InputProps={{
-                  style: { color: "black", backgroundColor: "white" },
+                  style: { color: "#1e1e1e", backgroundColor: "white" },
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
@@ -224,9 +224,9 @@ const SignUp = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 autoComplete="off"
-                InputLabelProps={{ style: { color: "black" } }}
+                InputLabelProps={{ style: { color: "#1e1e1e" } }}
                 InputProps={{
-                  style: { color: "black", backgroundColor: "white" },
+                  style: { color: "#1e1e1e", backgroundColor: "white" },
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
@@ -249,7 +249,7 @@ const SignUp = () => {
 
        
 
-              <Divider sx={{ color: "black" }}>or</Divider>
+              <Divider sx={{ color: "#1e1e1e" }}>or</Divider>
 
               <Button
                 fullWidth
@@ -261,8 +261,8 @@ const SignUp = () => {
                 sx={{
                   textTransform: "none",
                   borderRadius: 2,
-                  color: "black",
-                  borderColor: "black",
+                  color: "#1e1e1e",
+                  borderColor: "#1e1e1e",
                 }}
               >
                 Sign up with Google

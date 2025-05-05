@@ -71,7 +71,7 @@ const Dashboard = () => {
               variant="contained"
               sx={{
                 bgcolor: "yellow",
-                color: "black",
+                color: "#1e1e1e",
                 "&:hover": {
                   bgcolor: "#fdd835",
                 },

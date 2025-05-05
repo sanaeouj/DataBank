@@ -8,7 +8,7 @@ const Footer = () => {
       component="footer"
       sx={{
         backgroundColor: "#f5f5f5",
-        color: "#333",
+        color: "#1D1D1D",
         padding: "60px 40px",
         fontFamily: "Arial, sans-serif",
       }}
