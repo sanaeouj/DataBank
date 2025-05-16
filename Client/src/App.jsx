@@ -15,6 +15,7 @@ import Peoples from "./pages/Peoples";
 import AddPeople from "./pages/AddPeople";
 import UpdateUser from "./pages/UpdateUser";
 import Companies from "./pages/Companies";
+import Lists from "./pages/Lists";
 
 function App() {
   return (
@@ -27,8 +28,9 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/people" element={<Peoples />} />
           <Route path="/AddPeople" element={<AddPeople />} />
-          <Route path="/UpdateUser" element={<UpdateUser />} />
+          {/* <Route path="/UpdateUser" element={<UpdateUser />} /> */}
           <Route path="/companies" element={<Companies />} />
+          <Route path="/lists" element={<Lists />} />
         </Route>
       </Routes>
     </Router>

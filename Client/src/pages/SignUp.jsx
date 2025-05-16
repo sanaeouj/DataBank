@@ -42,9 +42,9 @@ const SignUp = () => {
     }
     try {
       const result = await signInWithPopup(auth, googleProvider);
-       window.location.href = "/dashboard";
+      window.location.href = "/dashboard";
     } catch (error) {
-       setError("Failed to sign in with Google.");
+      setError("Failed to sign in with Google.");
     }
   };
 
@@ -70,7 +70,7 @@ const SignUp = () => {
         password
       );
 
-       setSuccess("Account created successfully! Redirecting...");
+      setSuccess("Account created successfully! Redirecting...");
       setTimeout(() => {
         window.location.href = "/login";
       }, 2000);
@@ -246,8 +246,6 @@ const SignUp = () => {
                   },
                 }}
               />
-
-       
 
               <Divider sx={{ color: "#1e1e1e" }}>or</Divider>
 

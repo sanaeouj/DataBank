@@ -1,3 +1,4 @@
+// filepath: /react-dark-theme-app/src/components/FilterSidebar.jsx
 import React from "react";
 import {
   Box,
@@ -7,12 +8,32 @@ import {
   MenuItem,
   Select,
   Typography,
+  CssBaseline,
+  ThemeProvider,
+  createTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { FilterX } from "lucide-react";
+
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: { main: "#60a5fa" },
+    secondary: { main: "#a78bfa" },
+    error: { main: "#f87171" },
+    background: { default: "#333", paper: "#1e1e1e" },
+    text: { primary: "#f3f4f6", secondary: "#d1d5db" },
+  },
+  shape: { borderRadius: 8 },
+  typography: {
+    fontFamily: ["Inter", "Segoe UI", "Roboto", "sans-serif"].join(","),
+    button: { textTransform: "none" },
+  },
+});
 
 const FilterSidebar = ({ filters, setFilters, data }) => {
   const handleChange = (event) => {
     const { name, value } = event.target;
-    console.log("Updating filter:", name, value);
     setFilters((prev) => ({
       ...prev,
       [name]: value,
@@ -23,114 +44,131 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
     setFilters({});
   };
 
-  const getUniqueValues = (key) => {
-    console.log("Current Key:", key);
+  const getUniqueValues = (key, filter = {}) => {
     if (!data || data.length === 0) return [];
-
     const values = data
+      .filter((item) =>
+        Object.keys(filter).every((filterKey) => {
+          const keys = filterKey.split(".");
+          const filterValue = keys.reduce((acc, part) => acc?.[part], item);
+          return filter[filterKey] ? filter[filterKey] === filterValue : true;
+        })
+      )
       .map((item) => {
         const keys = key.split(".");
-        return keys.reduce(
-          (acc, part) =>
-            acc && acc[part] !== undefined ? acc[part] : undefined,
-          item
-        );
+        return keys.reduce((acc, part) => acc?.[part], item);
       })
       .filter((value) => value !== undefined && value !== null);
-
     return Array.from(new Set(values)).sort();
   };
 
-  const emailStatusValues = getUniqueValues("EmailStatus");
-  const industryValues = getUniqueValues("company.industry");
-  const titleValues = getUniqueValues("title");
-  const seniorityValues = getUniqueValues("seniority");
-  const departmentValues = getUniqueValues("departments");
-  const companyValues = getUniqueValues("company.company");
-  const cityValues = getUniqueValues("geo.city");
-  const stateValues = getUniqueValues("geo.state");
-  const countryValues = getUniqueValues("geo.country");
+  const fields = [
+    ["Title", "title"],
+    ["Email Status", "EmailStatus"],
+    ["Industry", "company.industry"],
+    ["Seniority", "seniority"],
+    ["Departments", "departments"],
+    ["Company", "company.company"],
+    ["Country", "geo.country"],
+    ["State", "geo.state", { "geo.country": filters["geo.country"] }],
+    ["City", "geo.city", {
+      "geo.country": filters["geo.country"],
+      "geo.state": filters["geo.state"],
+    }],
+  ];
 
-  const renderDropdown = (label, key, values) => (
-    <FormControl key={key} fullWidth sx={{ mt: 2 }}>
-      <InputLabel sx={{ color: "white", fontSize: 16 }} shrink={true}>
+  const renderDropdown = (label, key, filter = {}) => {
+  const values = getUniqueValues(key, filter);
+  return (
+    <Box key={key} sx={{ mt: 2 }}>
+      <Typography variant="body2" sx={{ 
+        color: "text.secondary", 
+        mb: 1,
+         fontWeight: 500,
+      }}>
         {label}
-      </InputLabel>
-      <Select
-        name={key}
-        value={filters[key] || "None"}
-        onChange={handleChange}
-        displayEmpty
-        sx={{
-          color: "white",
-          "& .MuiSelect-icon": { color: "white" },
-        }}
-        inputProps={{
-          sx: {
-            color: "white",
-          },
-        }}
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              bgcolor: "black",
-              color: "white",
-              "& .MuiMenuItem-root:hover": {
-                backgroundColor: "#333",
-              },
-              "& .Mui-selected": {
-                backgroundColor: "#444 !important",
+      </Typography>
+      <FormControl fullWidth>
+        <Select
+          name={key}
+          value={filters[key] || ""}
+          onChange={handleChange}
+          displayEmpty
+          sx={{
+            color: "text.primary",
+            height: 40,
+            fontSize: 14,
+            borderRadius: 2,
+            backgroundColor: alpha("#fff", 0.03),
+            "&:hover": { backgroundColor: alpha("#fff", 0.05) },
+            "& .MuiSelect-icon": { color: "text.secondary" },
+          }}
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                bgcolor: "background.paper",
+                color: "text.primary",
+                "& .MuiMenuItem-root:hover": {
+                  backgroundColor: alpha("#fff", 0.05),
+                },
+                "& .Mui-selected": {
+                  backgroundColor: alpha("#60a5fa", 0.15),
+                },
               },
             },
-          },
-        }}
-      >
-        <MenuItem value="">
-          <em>None</em>
-        </MenuItem>
-        {values.map((value, index) => (
-          <MenuItem key={`${value}-${index}`} value={value}>
-            {typeof value === "string" ? value : JSON.stringify(value)}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+          }}
+        >
+          {values.map((value, index) => (
+            <MenuItem key={index} value={value}>
+              {typeof value === "string" ? value : JSON.stringify(value)}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Box>
   );
+};
 
   return (
-    <Box
-      sx={{
-        width: 250,
-        p: 2,
-        borderRight: "1px solid #ccc",
-        color: "white",
-        bgcolor: "#1e1e1e",
-        height: "100vh",
-        overflowY: "auto",
-      }}
-    >
-      <Typography variant="h6" gutterBottom sx={{ color: "white" }}>
-        Filtres
-      </Typography>
-      <Typography variant="body2" sx={{ color: "white", mb: 2 }}>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <Box
+        sx={{
+          width: 300,
+          p: 3,
+          bgcolor: "background.paper",
+          color: "text.primary",
+          borderRight: "1px solid rgba(255,255,255,0.05)",
+          height: "100vh",
+          overflowY: "auto",
+        }}
+      >
+        <Typography variant="h5" fontWeight={600} gutterBottom>
+          Filters
+        </Typography>
+
         <Button
           variant="outlined"
           onClick={handleResetFilters}
-          sx={{ mt: 2, color: "white", borderColor: "white" }}
+          startIcon={<FilterX size={18} />}
+          sx={{
+            mb: 2,
+            color: "text.primary",
+            borderColor: alpha("#fff", 0.2),
+            "&:hover": {
+              bgcolor: alpha("#fff", 0.05),
+              borderColor: "primary.main",
+            },
+          }}
         >
-          Reset{" "}
-        </Button>{" "}
-      </Typography>
-      {renderDropdown("Title", "title", titleValues)}
-      {renderDropdown("Email Status", "EmailStatus", emailStatusValues)}
-      {renderDropdown("Industry", "company.industry", industryValues)}
-      {renderDropdown("Seniority", "seniority", seniorityValues)}
-      {renderDropdown("Departments", "departments", departmentValues)}
-      {renderDropdown("Company", "company", companyValues)}
-      {renderDropdown("City", "geo.city", cityValues)}
-      {renderDropdown("State", "geo.state", stateValues)}
-      {renderDropdown("Country", "geo.country", countryValues)}
-    </Box>
+          Reset Filters
+        </Button>
+
+        {fields.map(([label, key, condition]) =>
+          renderDropdown(label, key, condition)
+        )}
+      </Box>
+    </ThemeProvider>
   );
 };
 

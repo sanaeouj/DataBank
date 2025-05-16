@@ -12,7 +12,9 @@ import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [userName, setUserName] = useState(localStorage.getItem("userName") || "User");
+  const [userName, setUserName] = useState(
+    localStorage.getItem("userName") || "User"
+  );
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("userEmail");
@@ -36,7 +38,7 @@ const Dashboard = () => {
       sx={{
         display: "flex",
         height: "100vh",
-        width: "97vw",
+        width: "90vw",
         bgcolor: "#121212",
         color: "white",
         margin: 0,
@@ -55,7 +57,6 @@ const Dashboard = () => {
           flexGrow: 1,
           display: "flex",
           flexDirection: "column",
-          width: "100%",
         }}
       >
         <AppBar
@@ -70,6 +71,7 @@ const Dashboard = () => {
             <Button
               variant="contained"
               sx={{
+                m: 2,
                 bgcolor: "yellow",
                 color: "#1e1e1e",
                 "&:hover": {

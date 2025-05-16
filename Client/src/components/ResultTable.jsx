@@ -13,17 +13,40 @@ import {
   TextField,
   Checkbox,
   FormControlLabel,
+  Box,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import DownloadIcon from "@mui/icons-material/Download";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import * as XLSX from "xlsx";
+import axios from "axios";
 
 const ResultTable = ({ data = [], filters }) => {
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({});
+  const [savedFilters, setSavedFilters] = useState({});
   const [pageSize, setPageSize] = useState(10);
   const [visibleColumns, setVisibleColumns] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [currentRow, setCurrentRow] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    personalDetails: {},
+    companyDetails: {},
+    geoDetails: {},
+    revenueDetails: {},
+    socialDetails: {},
+  });
+
   const hiddenColumns = [
     "personalid",
     "companycompanyid",
@@ -36,19 +59,27 @@ const ResultTable = ({ data = [], filters }) => {
     "socialsocialid",
   ];
 
-  useEffect(() => {
-    if (visibleColumns.length === 0) {
-      setVisibleColumns(
-        getColumnsFromData(data).map((col) => ({
-          field: col.field,
-          visible: true,
-        }))
-      );
-    }
-  }, [data]);
+ 
+useEffect(() => {
+   const applyFilters = () => {
+    if (!data || !data.length) return [];
+
+    return flattenData(data).filter((row) => {
+      return Object.entries(filterValues).every(([key, value]) => {
+        if (!value) return true;  
+        const cellValue = row[key]?.toString().toLowerCase() || "";
+        return cellValue.includes(value.toLowerCase());
+      });
+    });
+  };
+
+  setFilteredData(applyFilters());
+}, [data, filterValues]); 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("fr-FR");
+  };
 
   const getColumnsFromData = (data) => {
-    console.log("data", data);
     if (!data || !data.length) return [];
     const columns = [];
     const headerMapping = {
@@ -72,6 +103,7 @@ const ResultTable = ({ data = [], filters }) => {
       "revenue.Total Funding": "Total Funding",
       "revenue.Annual Revenue": "Annual Revenue",
       "revenue.Latest Funding Amount": "Latest Funding Amount",
+      "revenue.Latest Funding": "Latest Funding",
     };
 
     const extractFields = (obj, prefix = "") => {
@@ -97,9 +129,16 @@ const ResultTable = ({ data = [], filters }) => {
                     .join(" "),
                 width: 200,
                 renderCell: (params) =>
-                  /Url$/i.test(fullKey) ? (
+                  fullKey === "revenue.Latest Funding" ? (
+                    formatDate(params.value)
+                  ) : /Url$/i.test(fullKey) ? (
                     <a
-                      href={params.value}
+                      href={
+                        params.value.startsWith("http://") ||
+                        params.value.startsWith("https://")
+                          ? params.value
+                          : `http://${params.value}`
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ color: "#90caf9" }}
@@ -119,13 +158,7 @@ const ResultTable = ({ data = [], filters }) => {
     extractFields(data[0]);
     return columns;
   };
-  const calculateTableWidth = () => {
-    const totalWidth = visibleColumns
-      .filter((col) => col.visible)
-      .reduce((totalWidth, col) => totalWidth + (col.width || 200), 0);
 
-    return Math.max(totalWidth, window.innerWidth);
-  };
   const flattenData = (data) =>
     data.map((item) => {
       const flatten = (obj, prefix = "") => {
@@ -150,19 +183,177 @@ const ResultTable = ({ data = [], filters }) => {
       return flatten(item);
     });
 
-  const filteredData = flattenData(data).filter((row) => {
-    return Object.entries(filterValues).every(([key, value]) => {
-      if (!value) return true;
+const handleEditClick = (row) => {
+  setCurrentRow(row);
+  
+  const formData = {
+    personalDetails: {
+      firstName: row['First Name'] || '',
+      lastName: row['Last Name'] || '', 
+      title: row.title || "",
+      seniority: row.seniority || "",
+      departments: row.departments || "",
+      mobilePhone: row.mobilePhone || "",
+      email: row.email || "",
+      EmailStatus: row.EmailStatus || "",
+    },
+    companyDetails: {
+      company: row.companycompany || "",
+      email: row.companyEmail || "",
+      phone: row.companyPhone || "",
+      employees: row.companyemployees || "",
+      industry: row.companyindustry || "",
+      seoDescription: row['companySEO Description'] || "",  
+    },
+    geoDetails: {
+      address: row.geoaddress || "",
+      city: row.geocity || "",
+      state: row.geostate || "",
+      country: row.geocountry || "",
+    },
+    revenueDetails: {
+      latestFunding: row.revenueLatestFunding || "",
+      latestFundingAmount: row.latestFunding || "", 
+    },
+    socialDetails: {
+      linkedinUrl: row['socialCompany Linkedin Url'] || '',
+      facebookUrl: row['socialFacebook Url'] || '',
+      twitterUrl: row['socialTwitter Url'] || '',
+    },
+  };
 
-      const itemValue = key.includes(".")
-        ? key.split(".").reduce((acc, part) => acc?.[part], row)
-        : row[key];
+  setEditFormData(formData);
+  setEditDialogOpen(true);
+};
+  
 
-      return itemValue
-        ? itemValue.toString().toLowerCase().includes(value.toLowerCase())
-        : false;
+const handleUpdateRow = async () => {
+  try {
+     const updateData = {
+      id: currentRow.personalid,
+      personalDetails: {
+        firstName: editFormData.personalDetails.firstName,
+        lastName: editFormData.personalDetails.lastName,
+        title: editFormData.personalDetails.title,
+        seniority: editFormData.personalDetails.seniority,
+        departments: editFormData.personalDetails.departments,
+        mobilePhone: editFormData.personalDetails.mobilePhone,
+        email: editFormData.personalDetails.email,
+        EmailStatus: editFormData.personalDetails.EmailStatus,
+      },
+      companyDetails: {
+        company: editFormData.companyDetails.company,
+        email: editFormData.companyDetails.email,
+        phone: editFormData.companyDetails.phone,
+        employees: editFormData.companyDetails.employees,
+        industry: editFormData.companyDetails.industry,
+        seoDescription: editFormData.companyDetails.seoDescription,  
+      },
+      geoDetails: {
+        address: editFormData.geoDetails.address,
+        city: editFormData.geoDetails.city,
+        state: editFormData.geoDetails.state,
+        country: editFormData.geoDetails.country,
+      },
+      revenueDetails: {
+        latestFunding: editFormData.revenueDetails.latestFunding,
+        latestFundingAmount: editFormData.revenueDetails.latestFundingAmount,
+      },
+      socialDetails: {
+        linkedinUrl: editFormData.socialDetails.linkedinUrl,
+        facebookUrl: editFormData.socialDetails.facebookUrl,
+        twitterUrl: editFormData.socialDetails.twitterUrl,
+      }
+    };
+
+ 
+     const response = await axios.put(
+      "http://localhost:3000/api/ressources/update",
+      updateData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+ 
+     const updatedData = filteredData.map((row) => {
+      if (row.personalid === currentRow.personalid) {
+        return {
+          ...row,
+           'First Name': updateData.personalDetails.firstName,
+          'Last Name': updateData.personalDetails.lastName,
+          title: updateData.personalDetails.title,
+          seniority: updateData.personalDetails.seniority,
+          departments: updateData.personalDetails.departments,
+          mobilePhone: updateData.personalDetails.mobilePhone,
+          email: updateData.personalDetails.email,
+          EmailStatus: updateData.personalDetails.EmailStatus,
+          
+           companycompany: updateData.companyDetails.company,
+          companyEmail: updateData.companyDetails.email,
+          companyPhone: updateData.companyDetails.phone,
+          companyemployees: updateData.companyDetails.employees,
+          companyindustry: updateData.companyDetails.industry,
+          'companySEO Description': updateData.companyDetails.seoDescription,
+          
+           geoaddress: updateData.geoDetails.address,
+          geocity: updateData.geoDetails.city,
+          geostate: updateData.geoDetails.state,
+          geocountry: updateData.geoDetails.country,
+          
+           revenueLatestFunding: updateData.revenueDetails.latestFunding,
+          'revenueLatest Funding Amount': updateData.revenueDetails.latestFundingAmount,
+          
+           'socialCompany Linkedin Url': updateData.socialDetails.linkedinUrl,
+          'socialFacebook Url': updateData.socialDetails.facebookUrl,
+          'socialTwitter Url': updateData.socialDetails.twitterUrl,
+        };
+      }
+      return row;
     });
-  });
+
+     setFilteredData(updatedData);
+    setEditDialogOpen(false);
+
+     setSnackbar({
+      open: true,
+      message: "Mise à jour réussie !",
+      severity: "success",
+    });
+
+  } catch (error) {
+     
+     setSnackbar({
+      open: true,
+      message: error.response?.data?.message || "Échec de la mise à jour",
+      severity: "error",
+    });
+  }
+};
+
+  const handleDeleteRow = async (row) => {
+    if (!window.confirm(`Are you sure you want to delete this row?`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`http://localhost:3000/api/ressources/delete/${row.personalid}`);
+      setFilteredData((prev) => prev.filter((item) => item.personalid !== row.personalid));
+      setSnackbar({
+        open: true,
+        message: "Row deleted successfully!",
+        severity: "success",
+      });
+    } catch (error) {
+       setSnackbar({
+        open: true,
+        message: "Failed to delete row.",
+        severity: "error",
+      });
+    }
+  };
 
   const exportToCSV = () => {
     if (!filteredData.length) {
@@ -224,21 +415,18 @@ const ResultTable = ({ data = [], filters }) => {
   const CustomToolbar = () => {
     const [exportMenuAnchorEl, setExportMenuAnchorEl] = useState(null);
     return (
-      
       <Toolbar
         style={{
-          backgroundColor: "#242424",
+          backgroundColor: "#333",
           marginBottom: "12px",
           color: "white",
+          justifyContent: "flex-start",
         }}
       >
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Data Table
-        </Typography>
         <Button
           onClick={(e) => setExportMenuAnchorEl(e.currentTarget)}
           startIcon={<DownloadIcon />}
-          style={{ color: "white" }}
+          style={{ color: "white", marginRight: "16px" }}
         >
           Export
         </Button>
@@ -279,12 +467,12 @@ const ResultTable = ({ data = [], filters }) => {
     <Dialog
       open={settingsDialogOpen}
       onClose={() => setSettingsDialogOpen(false)}
-      sx={{ backgroundColor: "#242424", color: "white" }}
+      sx={{ backgroundColor: "#333", color: "white" }}
     >
-      <DialogTitle style={{ backgroundColor: "#242424", color: "white" }}>
+      <DialogTitle style={{ backgroundColor: "#333", color: "white" }}>
         Filter
       </DialogTitle>
-      <DialogContent style={{ backgroundColor: "#242424", color: "white" }}>
+      <DialogContent style={{ backgroundColor: "#333", color: "white" }}>
         {getColumnsFromData(data).map((col) => {
           const visibleCol = visibleColumns.find(
             (vCol) => vCol.field === col.field
@@ -312,7 +500,7 @@ const ResultTable = ({ data = [], filters }) => {
           );
         })}
       </DialogContent>
-      <DialogActions style={{ backgroundColor: "#242424", color: "white" }}>
+      <DialogActions style={{ backgroundColor: "#333", color: "white" }}>
         <Button
           onClick={() => setSettingsDialogOpen(false)}
           style={{ color: "white" }}
@@ -323,21 +511,440 @@ const ResultTable = ({ data = [], filters }) => {
     </Dialog>
   );
 
-  const displayedColumns = getColumnsFromData(data).filter((col) => {
-    const visibleCol = visibleColumns.find((vCol) => vCol.field === col.field);
-    return visibleCol ? visibleCol.visible : true;
-  });
+  const EditDialog = () => (
+    <Dialog
+      open={editDialogOpen}
+      onClose={() => setEditDialogOpen(false)}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle style={{ backgroundColor: "#333", color: "white" }}>
+        Edit Row
+      </DialogTitle>
+      <DialogContent style={{ backgroundColor: "#333", padding: "20px" }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Typography variant="h6" sx={{ color: "white" }}>
+            Personal Details
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <TextField
+              label="First Name"
+              value={editFormData.personalDetails.firstName || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  personalDetails: {
+                    ...editFormData.personalDetails,
+                    firstName: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Last Name"
+              value={editFormData.personalDetails.lastName || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  personalDetails: {
+                    ...editFormData.personalDetails,
+                    lastName: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Title"
+              value={editFormData.personalDetails.title || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  personalDetails: {
+                    ...editFormData.personalDetails,
+                    title: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Mobile Phone"
+              value={editFormData.personalDetails.mobilePhone || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  personalDetails: {
+                    ...editFormData.personalDetails,
+                    mobilePhone: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Email"
+              value={editFormData.personalDetails.email || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  personalDetails: {
+                    ...editFormData.personalDetails,
+                    email: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+          </Box>
+
+          <Typography variant="h6" sx={{ color: "white" }}>
+            Company Details
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <TextField
+              label="Company Name"
+              value={editFormData.companyDetails.company || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  companyDetails: {
+                    ...editFormData.companyDetails,
+                    company: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Company Email"
+              value={editFormData.companyDetails.email || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  companyDetails: {
+                    ...editFormData.companyDetails,
+                    email: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Company Phone"
+              value={editFormData.companyDetails.phone || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  companyDetails: {
+                    ...editFormData.companyDetails,
+                    phone: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Employees"
+              value={editFormData.companyDetails.employees || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  companyDetails: {
+                    ...editFormData.companyDetails,
+                    employees: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+          </Box>
+
+          <Typography variant="h6" sx={{ color: "white" }}>
+            Location Details
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <TextField
+              label="Address"
+              value={editFormData.geoDetails.address || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  geoDetails: {
+                    ...editFormData.geoDetails,
+                    address: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="City"
+              value={editFormData.geoDetails.city || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  geoDetails: {
+                    ...editFormData.geoDetails,
+                    city: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="State"
+              value={editFormData.geoDetails.state || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  geoDetails: {
+                    ...editFormData.geoDetails,
+                    state: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Country"
+              value={editFormData.geoDetails.country || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  geoDetails: {
+                    ...editFormData.geoDetails,
+                    country: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+          </Box>
+
+          <Typography variant="h6" sx={{ color: "white" }}>
+            Social Media
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <TextField
+              label="LinkedIn URL"
+              value={editFormData.socialDetails.linkedinUrl || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  socialDetails: {
+                    ...editFormData.socialDetails,
+                    linkedinUrl: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Facebook URL"
+              value={editFormData.socialDetails.facebookUrl || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  socialDetails: {
+                    ...editFormData.socialDetails,
+                    facebookUrl: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+            <TextField
+              label="Twitter URL"
+              value={editFormData.socialDetails.twitterUrl || ""}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  socialDetails: {
+                    ...editFormData.socialDetails,
+                    twitterUrl: e.target.value,
+                  },
+                })
+              }
+              fullWidth
+              variant="outlined"
+              size="small"
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+          </Box>
+        </Box>
+      </DialogContent>
+      <DialogActions style={{ backgroundColor: "#333", color: "white" }}>
+        <Button
+          onClick={() => setEditDialogOpen(false)}
+          style={{ color: "white" }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleUpdateRow}
+          style={{ color: "white" }}
+          variant="contained"
+          color="primary"
+        >
+          Save Changes
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  const displayedColumns = [
+    ...getColumnsFromData(data).filter((col) => {
+      const visibleCol = visibleColumns.find((vCol) => vCol.field === col.field);
+      return visibleCol ? visibleCol.visible : true;
+    }),
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 300,
+      renderCell: (params) => (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            onClick={() => handleEditClick(params.row)}
+            startIcon={<EditIcon />}
+            variant="contained"
+            color="primary"
+            size="small"
+          >
+            Edit
+          </Button>
+          <Button
+            onClick={() => handleDeleteRow(params.row)}
+            startIcon={<DeleteIcon />}
+            variant="contained"
+            color="error"
+            size="small"
+          >
+            Delete
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div
       style={{
-        height: "100",
+        height: "100vh",
         overflowX: "auto",
-        backgroundColor: "#242424",
+        backgroundColor: "#333",
         color: "white",
       }}
     >
       <CustomToolbar />
-
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 2,
+          padding: 2,
+        }}
+      >
+        {displayedColumns.map((col) => (
+          <TextField
+            key={col.field}
+            label={col.headerName}
+            value={filterValues[col.field] || ""}
+            onChange={(e) =>
+              setFilterValues((prev) => ({
+                ...prev,
+                [col.field]: e.target.value,
+              }))
+            }
+            variant="outlined"
+            size="small"
+            sx={{
+              flex: 1,
+              minWidth: "150px",
+            }}
+            InputProps={{ style: { color: "white" } }}
+            InputLabelProps={{ style: { color: "white" } }}
+          />
+        ))}
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          padding: "8px 16px",
+          backgroundColor: "#1e1e1e",
+          color: "white",
+          fontSize: "16px",
+          fontWeight: "bold",
+        }}
+      >
+        <Typography variant="body1" sx={{ color: "white" }}>
+          Total Filter: {filteredData.length}
+        </Typography>
+      </Box>
       <DataGrid
         rows={filteredData}
         columns={displayedColumns}
@@ -351,37 +958,43 @@ const ResultTable = ({ data = [], filters }) => {
           fontSize: "20px",
           height: "100%",
           overflowX: "auto",
-          backgroundColor: "#242424",
+          backgroundColor: "#333",
           color: "white",
-          width: `${calculateTableWidth()}px`,
+          width: `${Math.max(
+            displayedColumns.reduce((total, col) => total + (col.width || 200), 0),
+            window.innerWidth
+          )}px`,
           "& .MuiDataGrid-columnHeaders": {
-            backgroundColor: "#242424",
+            backgroundColor: "#333",
             color: "white",
             fontWeight: "bold",
           },
-          "& .MuiDataGrid-row": { backgroundColor: "#242424", color: "white" },
+          "& .MuiDataGrid-row": {
+            backgroundColor: "#1e1e1e",
+            color: "white",
+          },
           "& .MuiDataGrid-row:hover": {
-            backgroundColor: "#242424",
+            backgroundColor: "#1e1e1e",
             color: "white",
           },
           "& .MuiDataGrid-footerContainer": {
-            backgroundColor: "#242424",
+            backgroundColor: "#1e1e1e",
             color: "white",
           },
           "& .MuiDataGrid-filler": {
-            backgroundColor: "#242424",
+            backgroundColor: "#1e1e1e",
             color: "white",
           },
           "& .MuiDataGrid-cell:hover": {
-            backgroundColor: "#242424",
+            backgroundColor: "#1e1e1e",
             color: "white",
           },
           "& .MuiDataGrid-footerCell": {
-            backgroundColor: "#242424",
+            backgroundColor: "#1e1e1e",
             color: "white",
           },
           "& .MuiDataGrid-columnHeader": {
-            backgroundColor: "#242424",
+            backgroundColor: "#1e1e1e",
             color: "white",
             fontWeight: "bold",
           },
@@ -401,15 +1014,15 @@ const ResultTable = ({ data = [], filters }) => {
           "& .MuiTablePagination-selectLabel": { color: "white" },
           "& .MuiTablePagination-menuItem": { color: "white" },
           "& .MuiTablePagination-menuItem:hover": {
-            backgroundColor: "#242424",
+            backgroundColor: "#444",
             color: "white",
           },
           "& .MuiTablePagination-menuItem.selected": {
-            backgroundColor: "#242424",
+            backgroundColor: "#444",
             color: "white",
           },
           "& .MuiDataGrid-cell": {
-            backgroundColor: "#242424",
+            backgroundColor: "#1e1e1e",
             color: "white",
             display: "flex",
             alignItems: "center",
@@ -418,44 +1031,22 @@ const ResultTable = ({ data = [], filters }) => {
           },
         }}
       />
-      <Dialog
-        open={filterDialogOpen}
-        onClose={() => setFilterDialogOpen(false)}
-        sx={{ backgroundColor: "#242424", color: "white" }}
+      <SettingsDialog />
+      <EditDialog />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <DialogTitle style={{ backgroundColor: "#242424", color: "white" }}>
-          Filter Data
-        </DialogTitle>
-        <DialogContent style={{ backgroundColor: "#242424", color: "white" }}>
-          {displayedColumns.map((col) => (
-            <TextField
-              key={col.field}
-              label={col.headerName}
-              value={filterValues[col.field] || ""}
-              onChange={(e) =>
-                setFilterValues((prev) => ({
-                  ...prev,
-                  [col.field]: e.target.value,
-                }))
-              }
-              fullWidth
-              margin="dense"
-              InputProps={{ style: { color: "white" } }}
-              InputLabelProps={{ style: { color: "white" } }}
-              style={{ backgroundColor: "#242424" }}
-            />
-          ))}
-        </DialogContent>
-        <DialogActions style={{ backgroundColor: "#242424", color: "white" }}>
-          <Button
-            onClick={() => setFilterDialogOpen(false)}
-            style={{ color: "white" }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <SettingsDialog style={{ backgroundColor: "#242424", color: "white" }} />
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
