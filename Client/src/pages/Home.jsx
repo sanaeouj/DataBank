@@ -167,7 +167,7 @@ const Home = () => {
               <Typography key={country} variant="body2" sx={{ mt: 1 }}>{country}: {count}</Typography>
             ))}
           </Box>  </Box>
-          <Paper sx={{ bgcolor: "#333", p: 2, borderRadius: 2, mt: 4 }}>
+          <Paper sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2, mt: 4 }}>
             <Typography variant="h6">Manage Tasks</Typography>
             <TextField
               label="New Task"
@@ -185,7 +185,7 @@ const Home = () => {
             <Button
               variant="contained"
               onClick={handleAddTask}
-              sx={{ bgcolor: "#333", color: "white", "&:hover": { bgcolor: "#fdd835" } }}
+              sx={{ bgcolor: "#333", color: "white",m:2, "&:hover": { bgcolor: "#fdd835" } }}
             >
               Add Task
             </Button>
