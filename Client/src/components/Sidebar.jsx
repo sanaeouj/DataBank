@@ -25,8 +25,7 @@ import {
   Search as SearchIcon,
   Add as AddIcon,
 } from "@mui/icons-material";
-import Icon from "../assets/icon.png";
-
+import Icon from "../assets/Icon.png";
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
