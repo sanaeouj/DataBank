@@ -5,8 +5,7 @@ import {
   Button,
   Toolbar,
 } from "@mui/material";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import DownloadIcon from "@mui/icons-material/Download";
+ import DownloadIcon from "@mui/icons-material/Download";
 
 const CustomToolbar = ({ exportToCSV, exportToExcel, setSettingsDialogOpen }) => {
   const [exportMenuAnchorEl, setExportMenuAnchorEl] = useState(null);

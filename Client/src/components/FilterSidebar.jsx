@@ -1,5 +1,4 @@
-// filepath: /react-dark-theme-app/src/components/FilterSidebar.jsx
-import React from "react";
+ import React from "react";
 import {
   Box,
   Button,
