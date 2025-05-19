@@ -4,8 +4,6 @@ import {
   Typography,
   TextField,
   Button,
-  Fab,
-  Tooltip,
   CssBaseline,
 } from "@mui/material";
 import FilterSidebar from "../components/FilterSidebar";

@@ -29,14 +29,7 @@ app.get('/api/ressources', async (req, res) => {
     res.status(500).send('Erreur serveur lors de la récupération des données.');
   }
 });
- app.delete("/api/ressources/deleteAll", async (req, res) => {
-  try {
-    await Ressource.deleteMany({});  
-    res.status(200).send({ message: "All rows deleted successfully" });
-  } catch (error) {
-    res.status(500).send({ error: "Error deleting all rows" });
-  }
-});
+
 app.get('/api/companies', async (req, res) => {
   try {
     const result = await pool.query('SELECT "company", "Email", "Phone", "employees", "industry", "SEO Description" FROM companyDetails'); 
