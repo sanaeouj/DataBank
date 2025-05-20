@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDF9RH2GrQkvKVDgBlDgxRE2D4RH5qXHRk",
-  authDomain: "databanklog.firebaseapp.com",
+ authDomain: "databank-f.onrender.com",
   projectId: "databanklog",
   storageBucket: "databanklog.appspot.com",
   messagingSenderId: "105550405268",
@@ -10,6 +10,5 @@ const firebaseConfig = {
  };
 
 const app = initializeApp(firebaseConfig);
-  console.log(import.meta.env);
 
 export default app;
