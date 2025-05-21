@@ -1,36 +1,36 @@
-const express = require('express');
-const { Pool } = require('pg');
-
+const express = require("express");
+require("dotenv").config();
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
+const {Sequelize} = require("sequelize");
 
-const pool = new Pool({
-  user: 'company_db_yod8_user',
-  host: 'dpg-d0lj2nl6ubrc73c50k8g-a.oregon-postgres.render.com',
-  database: 'company_db_yod8',
-  password: '4UHiQvoPYy0DevDVFhHmRqw6RbPu1ibK',
-  port: 5432,
-  ssl: {
-    rejectUnauthorized: false
-  }
+const sequelize = new Sequelize(process.env.DB_URL, {
+  dialect: "postgres",
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  },
+  logging: false,
+});
+sequelize.authenticate()
+  .then(() => {
+    console.log('Connexion à la base de données réussie !');
+  })
+  .catch(err => {
+    console.error('Erreur de connexion à la base de données :', err);
+  });
+app.get("/", (req, res) => {
+  res.send("Hello World!");
 });
 
-app.get('/api/ressources/simple', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM personaldetails');
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Query Error:', err);
-    res.status(500).json({ error: 'Internal Server Error', details: err.message });
-  }
-});
-
-// Démarrer le serveur
 app.listen(port, () => {
-  console.log(`Serveur écoutant sur http://localhost:${port}`);
+  console.log(`Example app listening at http://localhost:${port}`);
 });
 
-// const express = require('express');
+13// const express = require('express');
+
 // const { Pool } = require('pg');
 // const cors = require('cors');
 
