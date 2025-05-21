@@ -24,14 +24,23 @@ app.use(cors({
 app.get('/api/health', (req, res) => {
     res.status(200).send('Service is healthy');
 });
+pool.connect()
+    .then(client => {
+        console.log('Connected to PostgreSQL');
+        client.release();
+    })
+    .catch(err => {
+        console.error('Database connection error', err);
+    });
+
 app.get('/api/ressources/simple', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM personaldetails');
-        console.log('Query Result:', result.rows); // Log the result
+        console.log('Query Result:', result.rows); // Log the result for debugging
         res.json(result.rows);
     } catch (err) {
-        console.error('Query Error:', err); // Log the entire error object
-        res.status(500).json({ error: 'Internal Server Error', details: err.message });
+        console.error('Query Error:', err); // Log the full error object
+        res.status(500).json({ error: 'Internal Server Error', details: err.message || err });
     }
 });
 app.get('/', (req, res) => {
