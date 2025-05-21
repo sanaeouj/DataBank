@@ -11,10 +11,24 @@ const pool = new Pool({
   database: 'company_db_yod8',
   password: '4UHiQvoPYy0DevDVFhHmRqw6RbPu1ibK',
   port: 5432,
-  ssl: {
-    rejectUnauthorized: false  
-  }
+  ssl: { rejectUnauthorized: true }
 });
+
+(async () => {
+  try {
+    await pool.connect(); // Testez la connexion
+    console.log("Connexion réussie !");
+    
+    // Optionnel : Essayez une requête simple.
+    const result = await pool.query('SELECT NOW()'); // Vérifiez si une requête simple fonctionne
+    console.log(result.rows);
+  
+  } catch (err) {
+    console.error("Erreur lors de la connexion :", err);
+  } finally {
+    await pool.end();
+  }
+})();
 
  app.use(express.json());
 
