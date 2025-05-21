@@ -6,19 +6,16 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const pool = new Pool({
-    user: 'postgres',             
-    host: 'localhost',           
-    database: 'postgres',          
-    password: 'Eanas900811@',     
-    port: 5432,                   
-    ssl: { rejectUnauthorized: false }  
-});
+       user: 'company_db_yod8_user',                     
+    host: 'dpg-d0lj2nl6ubrc73c50k8g-a.oregon-postgres.render.com',  
+    database: 'company_db_yod8',                       
+    password: '4UHiQvoPYy0DevDVFhHmRqw6RbPu1ibK',      
+    port: 5432,                                      
+ });
 
-// Middleware pour parser le corps des requêtes JSON
-app.use(express.json());
+ app.use(express.json());
 
-// Configuration CORS pour autoriser le frontend
-app.use(cors({
+ app.use(cors({
    origin: ["https://databank-f.onrender.com"],
 }));
 app.get('/api/health', (req, res) => {
@@ -36,25 +33,23 @@ pool.connect()
 app.get('/api/ressources/simple', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM personaldetails');
-        console.log('Query Result:', result.rows); // Log the result for debugging
+        console.log('Query Result:', result.rows);  
         res.json(result.rows);
     } catch (err) {
-        console.error('Query Error:', err); // Log the full error object
+        console.error('Query Error:', err);  
         res.status(500).json({ error: 'Internal Server Error', details: err.message || err });
     }
 });
 app.get('/', (req, res) => {
     res.send('Welcome to DataBank API!');
 });
-// Middleware de sécurité
-app.use((req, res, next) => {
+ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   next();
 });
 
-// Endpoint pour obtenir toutes les ressources personnelles
-app.get('/api/ressources', async (req, res) => {
+ app.get('/api/ressources', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM personaldetails'); 
     res.status(200).json(result.rows); 
@@ -64,8 +59,7 @@ app.get('/api/ressources', async (req, res) => {
   }
 });
 
-// Endpoint pour obtenir les informations sur les entreprises
-app.get('/api/companies', async (req, res) => {
+ app.get('/api/companies', async (req, res) => {
   try {
     const result = await pool.query('SELECT "company", "Email", "Phone", "employees", "industry", "SEO Description" FROM companyDetails'); 
     res.status(200).json(result.rows); 
@@ -75,8 +69,7 @@ app.get('/api/companies', async (req, res) => {
   }
 });
 
-// Endpoint pour obtenir toutes les ressources
-app.get('/api/ressources/all', async (req, res) => {
+ app.get('/api/ressources/all', async (req, res) => {
   try {
     const personalDetails = await pool.query('SELECT * FROM personaldetails');
     const companyDetails = await pool.query('SELECT * FROM companydetails');
@@ -110,8 +103,7 @@ app.get('/api/ressources/all', async (req, res) => {
   }
 });
 
-// Endpoint pour créer un nouveau client
-app.post('/api/clients', async (req, res) => {
+ app.post('/api/clients', async (req, res) => {
   const client = await pool.connect();
   try {
     const {
@@ -241,8 +233,7 @@ app.post('/api/clients', async (req, res) => {
   }
 });
 
-// Endpoint pour supprimer une ressource par ID
-app.delete('/api/ressources/delete/:id', async (req, res) => {
+ app.delete('/api/ressources/delete/:id', async (req, res) => {
   const { id } = req.params;
   if (!id) {
     return res.status(400).json({ error: "ID is required to delete the resource." });
@@ -269,8 +260,7 @@ app.delete('/api/ressources/delete/:id', async (req, res) => {
   }
 });
  
-// Endpoint pour mettre à jour une ressource par ID
-app.put('/api/ressources/update/:id', async (req, res) => {
+ app.put('/api/ressources/update/:id', async (req, res) => {
   const { id } = req.params;
 
   if (!req.body) {
@@ -406,8 +396,7 @@ app.put('/api/ressources/update/:id', async (req, res) => {
   }
 });
 
-// Endpoint pour obtenir des employés d'une entreprise spécifique
-app.get('/api/company/employees/:company', async (req, res) => {
+ app.get('/api/company/employees/:company', async (req, res) => {
   try {
     const { company } = req.params;
 
@@ -442,7 +431,6 @@ app.get('/api/company/employees/:company', async (req, res) => {
   }
 });
 
-// Lancement du serveur
-app.listen(port, '0.0.0.0', () => {
+ app.listen(port, '0.0.0.0', () => {
   console.log(`Serveur écoutant sur http://0.0.0.0:${port}` );
 });
