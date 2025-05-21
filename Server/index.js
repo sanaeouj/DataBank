@@ -18,8 +18,7 @@ app.use(express.json());
 
 // Configuration CORS pour autoriser le frontend
 app.use(cors({
-  origin: "https://databank-f.onrender.com",
-}));
+   origin: ["https://databank-yndl.onrender.com", "https://databank-f.onrender.com"], }));
 
 // Middleware de sécurité
 app.use((req, res, next) => {
