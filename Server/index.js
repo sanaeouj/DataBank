@@ -20,6 +20,12 @@ app.use(express.json());
 app.use(cors({
    origin: ["https://databank-f.onrender.com"],
 }));
+app.get('/api/health', (req, res) => {
+    res.status(200).send('Service is healthy');
+});
+app.get('/', (req, res) => {
+    res.send('Welcome to DataBank API!');
+});
 // Middleware de sécurité
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
@@ -63,7 +69,7 @@ app.get('/api/ressources/all', async (req, res) => {
       const geo = geoLocalisation.rows.find(g => g.companyid === (company ? company.companyid : null));  
       const revenue = companyRevenue.rows.find(r => r.companyid === (company ? company.companyid : null));  
       const social = socialDetails.rows.find(s => s.companyid === (company ? company.companyid : null));  
-      
+
       return {
         ...personal,
         company: company ? { ...company } : {},
@@ -79,7 +85,7 @@ app.get('/api/ressources/all', async (req, res) => {
     });
     res.status(200).json(combinedData);
   } catch (err) {
-    console.error(err.message);
+    console.error("Error fetching all resources:", err.message);
     res.status(500).send('Erreur serveur lors de la récupération des données.');
   }
 });
