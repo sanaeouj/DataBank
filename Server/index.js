@@ -6,12 +6,15 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const pool = new Pool({
-       user: 'company_db_yod8_user',                     
-    host: 'dpg-d0lj2nl6ubrc73c50k8g-a.oregon-postgres.render.com',  
-    database: 'company_db_yod8',                       
-    password: '4UHiQvoPYy0DevDVFhHmRqw6RbPu1ibK',      
-    port: 5432,                                      
- });
+  user: 'company_db_yod8_user',
+  host: 'dpg-d0lj2nl6ubrc73c50k8g-a.oregon-postgres.render.com',
+  database: 'company_db_yod8',
+  password: '4UHiQvoPYy0DevDVFhHmRqw6RbPu1ibK',
+  port: 5432,
+  ssl: {
+    rejectUnauthorized: false  
+  }
+});
 
  app.use(express.json());
 
