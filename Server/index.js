@@ -6,11 +6,12 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const pool = new Pool({
-  user: 'postgres',
-  host:'localhost',
-  database:'company_db',
-  password: 'Eanas900811@',
-  port: 5432,
+    user: 'postgres',             
+    host: 'localhost',           
+    database: 'postgres',          
+    password: 'Eanas900811@',     
+    port: 5432,                   
+    ssl: { rejectUnauthorized: false }  
 });
 
 // Middleware pour parser le corps des requêtes JSON
@@ -26,11 +27,11 @@ app.get('/api/health', (req, res) => {
 app.get('/api/ressources/simple', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM personaldetails');
-        console.log('Query Result:', result.rows); // Add logging
+        console.log('Query Result:', result.rows); // Log the result
         res.json(result.rows);
     } catch (err) {
-        console.error('Query Error:', err); // Log the error for debugging
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Query Error:', err); // Log the entire error object
+        res.status(500).json({ error: 'Internal Server Error', details: err.message });
     }
 });
 app.get('/', (req, res) => {
