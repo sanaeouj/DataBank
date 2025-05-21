@@ -19,7 +19,7 @@ import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'https://databank-f.onrender.com'; // Assurez-vous que cette variable soit bien définie dans votre fichier d'environnement
+const API_URL = "https://databank-yndl.onrender.com" || 'https://databank-f.onrender.com';  
 
 const Home = () => {
   const navigate = useNavigate();
@@ -193,7 +193,7 @@ const Home = () => {
                     <Checkbox
                       checked={task.completed}
                       onChange={() => toggleComplete(index)}
-                      color="default" // Utilisez "default" au lieu de "white"
+                      color="default"  
                     />
                     <Button sx={{ m: 2 }} variant="outlined" color="error" onClick={() => handleDeleteTask(index)}>Delete</Button>
                     <Button sx={{ m: 2 }} variant="outlined" color="primary" onClick={() => handleEditTask(index)}>Edit</Button>
