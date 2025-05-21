@@ -23,6 +23,14 @@ app.use(cors({
 app.get('/api/health', (req, res) => {
     res.status(200).send('Service is healthy');
 });
+app.get('/api/ressources/simple', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM personaldetails');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get('/', (req, res) => {
     res.send('Welcome to DataBank API!');
 });
@@ -58,24 +66,18 @@ app.get('/api/companies', async (req, res) => {
 // Endpoint pour obtenir toutes les ressources
 app.get('/api/ressources/all', async (req, res) => {
   try {
-    console.log('Fetching all resources...');
-
-    // Récupérer les données des différentes tables
     const personalDetails = await pool.query('SELECT * FROM personaldetails');
     const companyDetails = await pool.query('SELECT * FROM companydetails');
     const geoLocalisation = await pool.query('SELECT * FROM geolocalisation');  
     const companyRevenue = await pool.query('SELECT * FROM companyrevenue');
     const socialDetails = await pool.query('SELECT * FROM socialdetails');
-
-    console.log('Data fetched successfully');
-
-    // Combiner les données des différentes tables
+    
     const combinedData = personalDetails.rows.map((personal) => {
       const company = companyDetails.rows.find(c => c.personalid === personal.personalid);
-      const geo = geoLocalisation.rows.find(g => g.companyid === (company ? company.companyid : null));
-      const revenue = companyRevenue.rows.find(r => r.companyid === (company ? company.companyid : null));
-      const social = socialDetails.rows.find(s => s.companyid === (company ? company.companyid : null));
-      
+      const geo = geoLocalisation.rows.find(g => g.companyid === (company ? company.companyid : null));  
+      const revenue = companyRevenue.rows.find(r => r.companyid === (company ? company.companyid : null));  
+      const social = socialDetails.rows.find(s => s.companyid === (company ? company.companyid : null));  
+
       return {
         ...personal,
         company: company ? { ...company } : {},
@@ -89,8 +91,6 @@ app.get('/api/ressources/all', async (req, res) => {
         social: social ? { ...social } : {},
       };
     });
-
-    // Répondre avec les données combinées
     res.status(200).json(combinedData);
   } catch (err) {
     console.error("Error fetching all resources:", err.message);
