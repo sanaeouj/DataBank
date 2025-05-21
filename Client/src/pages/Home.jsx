@@ -18,9 +18,8 @@ import {
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
-const API_URL = "https://databank-yndl.onrender.com" ;
-const Home = () => {
+const API_URL = "https://databank-yndl.onrender.com";  
+ const Home = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState(localStorage.getItem("userName") || "User");
   const [newTask, setNewTask] = useState("");
@@ -46,7 +45,7 @@ const fetchData = async () => {
     const response = await axios.get(`${API_URL}/api/ressources/all`);
     setData(response.data);
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error fetching data:", error.message);  
   }
 };
 
