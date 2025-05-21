@@ -19,7 +19,7 @@ import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const API_URL = "https://databank-yndl.onrender.com"|| "https://databank-f.onrender.com";  
+const API_URL = "https://databank-yndl.onrender.com" ;
 const Home = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState(localStorage.getItem("userName") || "User");
@@ -41,14 +41,14 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/ressources/all`);   
-      setData(response.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
+const fetchData = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/ressources/all`);
+    setData(response.data);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+};
 
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
