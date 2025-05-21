@@ -19,8 +19,7 @@ import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const API_URL = "https://databank-yndl.onrender.com" || 'https://databank-f.onrender.com';  
-
+const API_URL = "https://databank-yndl.onrender.com"|| "https://databank-f.onrender.com";  
 const Home = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState(localStorage.getItem("userName") || "User");
@@ -39,13 +38,12 @@ const Home = () => {
     
     const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
     setTasks(storedTasks);
-
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/ressources/all`);
+      const response = await axios.get(`${API_URL}/api/ressources/all`);   
       setData(response.data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -73,7 +71,6 @@ const Home = () => {
       const updatedTasks = editIndex !== null
         ? tasks.map((task, index) => (index === editIndex ? { ...task, text: newTask } : task))
         : [...tasks, { text: newTask, completed: false }];
-
       setTasks(updatedTasks);
       setNewTask("");
       setEditIndex(null);
@@ -108,7 +105,7 @@ const Home = () => {
       return acc;
     }, {});
   };
-  
+
   const groupByTitle = () => {
     return data.reduce((acc, item) => {
       const title = item.title;
