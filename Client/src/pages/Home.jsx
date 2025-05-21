@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -35,17 +36,16 @@ const Home = () => {
     }
     const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
     setTasks(storedTasks);
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/ressources/all");
-        const result = await response.json();
-        setData(result);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ressources/all`);
+      setData(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  fetchData();
+}, []);
 
   useEffect(() => {
     if (tasks.length > 0) {
