@@ -19,6 +19,8 @@ import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'https://databank-f.onrender.com'; // Assurez-vous que cette variable soit bien définie dans votre fichier d'environnement
+
 const Home = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState(localStorage.getItem("userName") || "User");
@@ -34,23 +36,24 @@ const Home = () => {
       const formattedName = nameParts.map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
       setUserName(formattedName);
     }
+    
     const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
     setTasks(storedTasks);
+
+    fetchData();
+  }, []);
+
   const fetchData = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/ressources/all`);
+      const response = await axios.get(`${API_URL}/api/ressources/all`);
       setData(response.data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
-  fetchData();
-}, []);
 
   useEffect(() => {
-    if (tasks.length > 0) {
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-    }
+    localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
   const calculateProgress = () => {
@@ -66,15 +69,14 @@ const Home = () => {
   };
 
   const handleAddTask = () => {
-    if (newTask.trim() !== "") {
-      if (editIndex !== null) {
-        const updatedTasks = tasks.map((task, index) => (index === editIndex ? { ...task, text: newTask } : task));
-        setTasks(updatedTasks);
-        setEditIndex(null);
-      } else {
-        setTasks([...tasks, { text: newTask, completed: false }]);
-      }
+    if (newTask.trim()) {
+      const updatedTasks = editIndex !== null
+        ? tasks.map((task, index) => (index === editIndex ? { ...task, text: newTask } : task))
+        : [...tasks, { text: newTask, completed: false }];
+
+      setTasks(updatedTasks);
       setNewTask("");
+      setEditIndex(null);
     }
   };
 
@@ -84,24 +86,18 @@ const Home = () => {
   };
 
   const handleDeleteTask = (index) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-    setTasks(updatedTasks);
+    setTasks(tasks.filter((_, i) => i !== index));
   };
 
   const toggleComplete = (index) => {
-    const updatedTasks = tasks.map((task, i) => (i === index ? { ...task, completed: !task.completed } : task));
-    setTasks(updatedTasks);
+    setTasks(tasks.map((task, i) => (i === index ? { ...task, completed: !task.completed } : task)));
   };
 
   const progress = calculateProgress();
   const totalClients = data.length;
-  const ClientValide = data.reduce((count, item) => count + (item.EmailStatus === "Valid" ? 1 : 0), 0);
-  const ClientManager = data.filter((item) => item.title === "Manager").length;
-
-  const calculateCompanies = () => {
-    const uniqueCompanies = new Set(data.map((item) => typeof item.company.company === "string" ? item.company.company.toLowerCase().trim() : null).filter(Boolean));
-    return uniqueCompanies.size;
-  };
+  const validClientsCount = data.filter((item) => item.EmailStatus === "Valid").length;
+  const clientManagersCount = data.filter((item) => item.title === "Manager").length;
+  const totalCompaniesCount = new Set(data.map(item => item.company?.company?.toLowerCase().trim())).size;
 
   const groupByCountry = () => {
     return data.reduce((acc, item) => {
@@ -112,7 +108,7 @@ const Home = () => {
       return acc;
     }, {});
   };
-
+  
   const groupByTitle = () => {
     return data.reduce((acc, item) => {
       const title = item.title;
@@ -124,7 +120,7 @@ const Home = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", height: "100%", width: "100vw", color: "white",bgcolor: "#333" }}>
+    <Box sx={{ display: "flex", height: "100%", width: "100vw", color: "white", bgcolor: "#333" }}>
       <Sidebar />
       <Box component="main" sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <AppBar position="static" sx={{ bgcolor: "#333", boxShadow: "none" }}>
@@ -144,29 +140,29 @@ const Home = () => {
             </Box>
             <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
               <Typography variant="h6">Valid Client</Typography>
-              <Typography variant="h4">{ClientValide}</Typography>
+              <Typography variant="h4">{validClientsCount}</Typography>
             </Box>
             <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
               <Typography variant="h6">Client Manager</Typography>
-              <Typography variant="h4">{ClientManager}</Typography>
+              <Typography variant="h4">{clientManagersCount}</Typography>
             </Box>
             <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
               <Typography variant="h6">Total Companies</Typography>
-              <Typography variant="h4">{calculateCompanies()}</Typography>
+              <Typography variant="h4">{totalCompaniesCount}</Typography>
             </Box>
-         
-          <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2   }}>
-            <Typography variant="h6">Title Distribution:</Typography>
-            {Object.entries(groupByTitle()).map(([title, count]) => (
-              <Typography key={title} variant="body2" sx={{ mt: 1 }}>{title}: {count}</Typography>
-            ))}
+            <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
+              <Typography variant="h6">Title Distribution:</Typography>
+              {Object.entries(groupByTitle()).map(([title, count]) => (
+                <Typography key={title} variant="body2" sx={{ mt: 1 }}>{title}: {count}</Typography>
+              ))}
+            </Box>
+            <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
+              <Typography variant="h6">Contacts by Country:</Typography>
+              {Object.entries(groupByCountry()).map(([country, count]) => (
+                <Typography key={country} variant="body2" sx={{ mt: 1 }}>{country}: {count}</Typography>
+              ))}
+            </Box>
           </Box>
-          <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
-            <Typography variant="h6">Contacts by Country:</Typography>
-            {Object.entries(groupByCountry()).map(([country, count]) => (
-              <Typography key={country} variant="body2" sx={{ mt: 1 }}>{country}: {count}</Typography>
-            ))}
-          </Box>  </Box>
           <Paper sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2, mt: 4 }}>
             <Typography variant="h6">Manage Tasks</Typography>
             <TextField
@@ -185,22 +181,22 @@ const Home = () => {
             <Button
               variant="contained"
               onClick={handleAddTask}
-              sx={{ bgcolor: "#333", color: "white",m:2, "&:hover": { bgcolor: "#fdd835" } }}
+              sx={{ bgcolor: "#333", color: "white", m: 2, "&:hover": { bgcolor: "#fdd835" } }}
             >
               Add Task
             </Button>
             <List sx={{ mt: 2 }}>
               {tasks.map((task, index) => (
-                <ListItem key={index} sx={{ color: "white",bgcolor: "#242424", borderRadius: 1, mb: 1 }}>
+                <ListItem key={index} sx={{ color: "white", bgcolor: "#242424", borderRadius: 1, mb: 1 }}>
                   <ListItemText primary={task.text} />
                   <ListItemSecondaryAction>
                     <Checkbox
                       checked={task.completed}
                       onChange={() => toggleComplete(index)}
-                      color="white"
+                      color="default" // Utilisez "default" au lieu de "white"
                     />
                     <Button sx={{ m: 2 }} variant="outlined" color="error" onClick={() => handleDeleteTask(index)}>Delete</Button>
-                    <Button sx={{ m: 2 }}variant="outlined" color="primary" onClick={() => handleEditTask(index)}>Edit</Button>
+                    <Button sx={{ m: 2 }} variant="outlined" color="primary" onClick={() => handleEditTask(index)}>Edit</Button>
                   </ListItemSecondaryAction>
                 </ListItem>
               ))}
@@ -213,7 +209,6 @@ const Home = () => {
               sx={{
                 height: 6,
                 borderRadius: 5,
-               
                 "& .MuiLinearProgress-bar": {
                   backgroundColor: "#f4e33d",
                 },
