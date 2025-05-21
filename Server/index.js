@@ -24,12 +24,14 @@ app.get('/api/health', (req, res) => {
     res.status(200).send('Service is healthy');
 });
 app.get('/api/ressources/simple', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM personaldetails');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        const result = await pool.query('SELECT * FROM personaldetails');
+        console.log('Query Result:', result.rows); // Add logging
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Query Error:', err); // Log the error for debugging
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 app.get('/', (req, res) => {
     res.send('Welcome to DataBank API!');
