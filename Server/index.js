@@ -13,8 +13,9 @@ const pool = new Pool({
 });
 
 app.use(express.json());
-app.use(cors());
-
+  app.use(cors({
+    origin: "https://databank-f.onrender.com",  
+}));
  app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
