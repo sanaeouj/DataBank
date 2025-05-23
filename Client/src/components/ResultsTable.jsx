@@ -258,37 +258,38 @@ const headerMapping = {
           },
         }
       );
-      const updatedData = filteredData.map((row) => {
-        if (row.personalid === currentRow.personalid) {
-          return {
-            ...row,
-            'First Name': updateData.personalDetails.firstName,
-            'Last Name': updateData.personalDetails.lastName,
-            title: updateData.personalDetails.title,
-            seniority: updateData.personalDetails.seniority,
-            departments: updateData.personalDetails.departments,
-            mobilePhone: updateData.personalDetails.mobilePhone,
-            email: updateData.personalDetails.email,
-            EmailStatus: updateData.personalDetails.EmailStatus,
-            companycompany: updateData.companyDetails.company,
-            companyEmail: updateData.companyDetails.email,
-            companyPhone: updateData.companyDetails.phone,
-            companyemployees: updateData.companyDetails.employees,
-            companyindustry: updateData.companyDetails.industry,
-            'companySEO Description': updateData.companyDetails.seoDescription,
-            geoaddress: updateData.geoDetails.address,
-            geocity: updateData.geoDetails.city,
-            geostate: updateData.geoDetails.state,
-            geocountry: updateData.geoDetails.country,
-            'revenueLatest Funding': updateData.revenueDetails.latestFunding,
-            'revenueLatest Funding Amount': updateData.revenueDetails.latestFundingAmount,
-            'socialCompany Linkedin Url': updateData.socialDetails.linkedinUrl,
-            'socialFacebook Url': updateData.socialDetails.facebookUrl,
-            'socialTwitter Url': updateData.socialDetails.twitterUrl,
-          };
-        }
-        return row;
-      });
+     const updatedData = filteredData.map((row) => {
+  if (row.personalid === currentRow.personalid) {
+    return {
+      ...row,
+       'First Name': updateData.personalDetails.firstName,
+      'Last Name': updateData.personalDetails.lastName,
+      title: updateData.personalDetails.title,
+      seniority: updateData.personalDetails.seniority,
+      departments: updateData.personalDetails.departments,
+      mobilePhone: updateData.personalDetails.mobilePhone,
+      email: updateData.personalDetails.email,
+      EmailStatus: updateData.personalDetails.EmailStatus,
+       company_company: updateData.companyDetails.company,
+      company_Email: updateData.companyDetails.email,
+      company_Phone: updateData.companyDetails.phone,
+      company_employees: updateData.companyDetails.employees,
+      company_industry: updateData.companyDetails.industry,
+      'company_SEO Description': updateData.companyDetails.seoDescription,
+       geo_address: updateData.geoDetails.address,
+      geo_city: updateData.geoDetails.city,
+      geo_state: updateData.geoDetails.state,
+      geo_country: updateData.geoDetails.country,
+       'revenue_Latest Funding': updateData.revenueDetails.latestFunding,
+      'revenue_Latest Funding Amount': updateData.revenueDetails.latestFundingAmount,
+       'social_Company Linkedin Url': updateData.socialDetails.linkedinUrl,
+      'social_Facebook Url': updateData.socialDetails.facebookUrl,
+      'social_Twitter Url': updateData.socialDetails.twitterUrl,
+    };
+  }
+  return row;
+});
+setFilteredData(updatedData);
       setFilteredData(updatedData);
       setEditDialogOpen(false);
       setSnackbar({
@@ -345,8 +346,10 @@ const headerMapping = {
     const headers = Object.keys(filteredData[0]).filter(
       (key) => !hiddenColumns.includes(key)
     );
+    // Utiliser le headerMapping pour les noms de colonnes affichés
+    const headerRow = headers.map((key) => headerMapping[key] || key);
     const csvContent = [
-      headers.join(","),
+      headerRow.join(","),
       ...filteredData.map((row) =>
         headers
           .map((header) => {
@@ -374,12 +377,14 @@ const headerMapping = {
       alert("No data to export.");
       return;
     }
+    const headers = Object.keys(filteredData[0]).filter(
+      (key) => !hiddenColumns.includes(key)
+    );
+    // Générer les données avec les bons noms de colonnes
     const filteredExportData = filteredData.map((row) => {
       const newRow = {};
-      Object.entries(row).forEach(([key, value]) => {
-        if (!hiddenColumns.includes(key)) {
-          newRow[key] = value;
-        }
+      headers.forEach((key) => {
+        newRow[headerMapping[key] || key] = row[key];
       });
       return newRow;
     });
