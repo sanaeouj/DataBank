@@ -84,29 +84,29 @@ const ResultsTable = ({ data = [], filters }) => {
   const getColumnsFromData = (data) => {
     if (!data || !data.length) return [];
     const columns = [];
-    const headerMapping = {
-      "First Name": "Prénom",
-      "Last Name": "Nom",
-      "mobilePhone": "Téléphone mobile",
-      "EmailStatus": "Statut Email",
-      "company_company": "Entreprise",
-      "company_Email": "Email Entreprise",
-      "company_Phone": "Téléphone Entreprise",
-      "company_employees": "Employés",
-      "company_industry": "Industrie",
-      "company_SEO Description": "Description SEO",
-      "geo_address": "Adresse",
-      "geo_city": "Ville",
-      "geo_state": "État/Région",
-      "geo_country": "Pays",
-      "social_Company Linkedin Url": "LinkedIn",
-      "social_Facebook Url": "Facebook",
-      "social_Twitter Url": "Twitter",
-      "revenue_Annual Revenue": "Revenu Annuel",
-      "revenue_Total Funding": "Financement Total",
-      "revenue_Latest Funding Amount": "Montant dernier financement",
-      "revenue_Latest Funding": "Date dernier financement",
-    };
+const headerMapping = {
+  "First Name": "First Name",
+  "Last Name": "Last Name",
+  "mobilePhone": "Mobile Phone",
+  "EmailStatus": "Email Status",
+  "company_company": "Company",
+  "company_Email": "Company Email",
+  "company_Phone": "Company Phone",
+  "company_employees": "Employees",
+  "company_industry": "Industry",
+  "company_SEO Description": "SEO Description",
+  "geo_address": "Address",
+  "geo_city": "City",
+  "geo_state": "State/Region",
+  "geo_country": "Country",
+  "social_Company Linkedin Url": "LinkedIn",
+  "social_Facebook Url": "Facebook",
+  "social_Twitter Url": "Twitter",
+  "revenue_Annual Revenue": "Annual Revenue",
+  "revenue_Total Funding": "Total Funding",
+  "revenue_Latest Funding Amount": "Latest Funding Amount",
+  "revenue_Latest Funding": "Latest Funding Date",
+};
 
     const sampleItem = flattenData([data[0]])[0];
     for (const key in sampleItem) {
