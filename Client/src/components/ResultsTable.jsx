@@ -20,6 +20,7 @@ import CustomToolbar from "./CustomToolbar";
 import EditDialog from "./EditDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+
 const headerMapping = {
   "First Name": "First Name",
   "Last Name": "Last Name",
@@ -47,6 +48,7 @@ const headerMapping = {
   "socialFacebook Url": "Facebook",
   "socialTwitter Url": "Twitter",
 };
+
 const ResultsTable = ({ data = [], filters }) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({});
@@ -96,6 +98,7 @@ const ResultsTable = ({ data = [], filters }) => {
   }, [data, filterValues]);
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("fr-FR");
   };
 
@@ -147,26 +150,30 @@ const ResultsTable = ({ data = [], filters }) => {
                     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                     .join(" "),
                 width: 200,
-                renderCell: (params) =>
-                  fullKey === "revenue.Latest Funding" ? (
-                    formatDate(params.value)
-                  ) : /Url$/i.test(fullKey) ? (
-                    <a
-                      href={
-                        params.value.startsWith("http://") ||
-                        params.value.startsWith("https://")
-                          ? params.value
-                          : `http://${params.value}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "#90caf9" }}
-                    >
-                      {params.value ? "Link" : ""}
-                    </a>
-                  ) : (
-                    params.value || "N/A"
-                  ),
+                renderCell: (params) => {
+                  if (params.value === undefined || params.value === null) return "N/A";
+                  
+                  if (fullKey === "revenue.Latest Funding") {
+                    return formatDate(params.value);
+                  } else if (/Url$/i.test(fullKey)) {
+                    return params.value ? (
+                      <a
+                        href={
+                          params.value.startsWith("http://") ||
+                          params.value.startsWith("https://")
+                            ? params.value
+                            : `http://${params.value}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#90caf9" }}
+                      >
+                        Link
+                      </a>
+                    ) : "N/A";
+                  }
+                  return params.value || "N/A";
+                },
               });
             }
           }
@@ -238,7 +245,7 @@ const ResultsTable = ({ data = [], filters }) => {
         twitterUrl: row['socialTwitter Url'] || '',
       },
     };
-     setEditFormData(formData);
+    setEditFormData(formData);
     setEditDialogOpen(true);
   };
 
@@ -288,7 +295,8 @@ const ResultsTable = ({ data = [], filters }) => {
           twitterUrl: editFormData.socialDetails.twitterUrl || '',
         }
       };
-       const response = await axios.put(
+      
+      const response = await axios.put(
         `https://databank-yndl.onrender.com/api/ressources/update/${currentRow.personalid}`,
         updateData,
         {
@@ -333,7 +341,6 @@ const ResultsTable = ({ data = [], filters }) => {
         }
         return row;
       });
-          const refreshedData = await axios.get('https://databank-yndl.onrender.com/api/ressources');
 
       setFilteredData(updatedData);
       setEditDialogOpen(false);
@@ -359,6 +366,7 @@ const ResultsTable = ({ data = [], filters }) => {
       } else {
         console.error("Error message:", error.message);
       }
+      
       setSnackbar({
         open: true,
         message: errorMessage,
@@ -383,66 +391,64 @@ const ResultsTable = ({ data = [], filters }) => {
       console.error("Error deleting row:", error);
       setSnackbar({
         open: true,
-        message: "Failed to delete row.",
+        message: error.response?.data?.message || "Failed to delete row.",
         severity: "error",
       });
     }
   };
 
   const exportToCSV = () => {
-  if (!filteredData.length) {
-    alert("No data to export.");
-    return;
-  }
-  const headers = Object.keys(filteredData[0]).filter(
-    (key) => !hiddenColumns.includes(key)
-  );
-  // Utilise les labels du headerMapping pour la première ligne
-  const csvContent = [
-    headers.map((key) => headerMapping[key] || key).join(","),
-    ...filteredData.map((row) =>
-      headers
-        .map((header) => {
-          const cellData = (row[header] || "").toString().replace(/"/g, '""');
-          return `"${cellData}"`;
-        })
-        .join(",")
-    ),
-  ].join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  if (navigator.msSaveBlob) {
-    navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
-  } else {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", "ResultsTable_Export.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-};
+    if (!filteredData.length) {
+      alert("No data to export.");
+      return;
+    }
+    const headers = Object.keys(filteredData[0]).filter(
+      (key) => !hiddenColumns.includes(key)
+    );
+    const csvContent = [
+      headers.map((key) => headerMapping[key] || key).join(","),
+      ...filteredData.map((row) =>
+        headers
+          .map((header) => {
+            const cellData = (row[header] || "").toString().replace(/"/g, '""');
+            return `"${cellData}"`;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    if (navigator.msSaveBlob) {
+      navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
+    } else {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", "ResultsTable_Export.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const exportToExcel = () => {
-  if (!filteredData.length) {
-    alert("No data to export.");
-    return;
-  }
-  const headers = Object.keys(filteredData[0]).filter(
-    (key) => !hiddenColumns.includes(key)
-  );
-  // Remplace les clés par les labels dans chaque ligne
-  const filteredExportData = filteredData.map((row) => {
-    const newRow = {};
-    headers.forEach((key) => {
-      newRow[headerMapping[key] || key] = row[key];
+    if (!filteredData.length) {
+      alert("No data to export.");
+      return;
+    }
+    const headers = Object.keys(filteredData[0]).filter(
+      (key) => !hiddenColumns.includes(key)
+    );
+    const filteredExportData = filteredData.map((row) => {
+      const newRow = {};
+      headers.forEach((key) => {
+        newRow[headerMapping[key] || key] = row[key];
+      });
+      return newRow;
     });
-    return newRow;
-  });
-  const worksheet = XLSX.utils.json_to_sheet(filteredExportData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-  XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
-};
+    const worksheet = XLSX.utils.json_to_sheet(filteredExportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
+  };
 
   const SettingsDialog = () => (
     <Dialog
@@ -529,7 +535,7 @@ const ResultsTable = ({ data = [], filters }) => {
   return (
     <div
       style={{
-        height: "90vh", 
+        height: "90vh",
         overflowX: "auto",
         backgroundColor: "#333",
         color: "white",
