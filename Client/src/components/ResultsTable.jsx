@@ -21,30 +21,7 @@ import EditDialog from "./EditDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-// Place headerMapping ici, hors du composant
-const headerMapping = {
-  "First Name": "First Name",
-  "Last Name": "Last Name",
-  "mobilePhone": "Mobile Phone",
-  "EmailStatus": "Email Status",
-  "company_company": "Company",
-  "company_Email": "Company Email",
-  "company_Phone": "Company Phone",
-  "company_employees": "Employees",
-  "company_industry": "Industry",
-  "company_SEO Description": "SEO Description",
-  "geo_address": "Address",
-  "geo_city": "City",
-  "geo_state": "State/Region",
-  "geo_country": "Country",
-  "social_Company Linkedin Url": "LinkedIn",
-  "social_Facebook Url": "Facebook",
-  "social_Twitter Url": "Twitter",
-  "revenue_Annual Revenue": "Annual Revenue",
-  "revenue_Total Funding": "Total Funding",
-  "revenue_Latest Funding Amount": "Latest Funding Amount",
-  "revenue_Latest Funding": "Latest Funding Date",
-};
+ 
 
 const ResultsTable = ({ data = [], filters }) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
@@ -67,7 +44,29 @@ const ResultsTable = ({ data = [], filters }) => {
     revenueDetails: {},
     socialDetails: {},
   });
-
+  const headerMapping = {
+    "First Name": "First Name",
+    "Last Name": "Last Name",
+    "mobilePhone": "Mobile Phone",
+    "EmailStatus": "Email Status",
+    "company_company": "Company",
+    "company_Email": "Company Email",
+    "company_Phone": "Company Phone",
+    "company_employees": "Employees",
+    "company_industry": "Industry",
+    "company_SEO Description": "SEO Description",
+    "geo_address": "Address",
+    "geo_city": "City",
+    "geo_state": "State/Region",
+    "geo_country": "Country",
+    "social_Company Linkedin Url": "LinkedIn",
+    "social_Facebook Url": "Facebook",
+    "social_Twitter Url": "Twitter",
+    "revenue_Annual Revenue": "Annual Revenue",
+    "revenue_Total Funding": "Total Funding",
+    "revenue_Latest Funding Amount": "Latest Funding Amount",
+    "revenue_Latest Funding": "Latest Funding Date",
+  };
   const hiddenColumns = [
     "personalid",
     "companycompanyid",
