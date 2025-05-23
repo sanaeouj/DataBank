@@ -3,7 +3,7 @@ import Sidebar from "../components/Sidebar";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
- const importMapping = {
+const importMapping = {
   "First Name": "firstName",
   "Last Name": "lastName",
   "Title": "title",
@@ -49,7 +49,8 @@ import * as XLSX from "xlsx";
   "socialFacebook Url": "social.facebookUrl",
   "Twitter": "social.twitterUrl",
   "socialTwitter Url": "social.twitterUrl",
-  };
+};
+
 const API_BASE_URL = "https://databank-yndl.onrender.com";
 
 const AddPeople = () => {
@@ -148,7 +149,7 @@ const AddPeople = () => {
 
   const addClientToDatabase = async (client) => {
     try {
-    const response = await fetch(`https://databank-yndl.onrender.com/api/clients`, {
+      const response = await fetch(`${API_BASE_URL}/api/clients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(client),
@@ -164,6 +165,7 @@ const AddPeople = () => {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
+    if (!file) return;
     const fileExtension = file.name.split(".").pop();
     const reader = new FileReader();
 
@@ -196,7 +198,7 @@ const AddPeople = () => {
     }
     try {
       for (const client of fileData) {
-         let newClient = JSON.parse(JSON.stringify(formData));
+        let newClient = JSON.parse(JSON.stringify(formData));
         Object.entries(client).forEach(([csvKey, value]) => {
           const formKey = importMapping[csvKey] || csvKey;
           const keys = formKey.split(".");
@@ -208,7 +210,7 @@ const AddPeople = () => {
             newClient[keys[0]][keys[1]][keys[2]] = value;
           }
         });
-         if (
+        if (
           !newClient.firstName ||
           !newClient.lastName ||
           !newClient.email ||
@@ -249,7 +251,7 @@ const AddPeople = () => {
     e.preventDefault();
     try {
       const payload = { ...formData };
-    const response = await fetch(`https://databank-yndl.onrender.com/api/clients`, {
+      const response = await fetch(`${API_BASE_URL}/api/clients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
