@@ -40,7 +40,7 @@ const Companies = () => {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/companies");
+      const response = await axios.get("https://databank-yndl.onrender.com/api/companies");
       const companies = response.data;
 
       const companyCount = {};
