@@ -293,7 +293,7 @@ const ResultsTable = ({ data = [], filters }) => {
         }
       };
       const response = await axios.put(
-        `${API_BASE_URL}/api/ressources/update/${currentRow.personalid}`,
+        `https://databank-yndl.onrender.com/api/ressources/update/${currentRow.personalid}`,
         updateData,
         {
           headers: {
@@ -333,7 +333,7 @@ const ResultsTable = ({ data = [], filters }) => {
         }
         return row;
       });
-      await axios.get(`${API_BASE_URL}/api/ressources`);
+      await axios.get(`https://databank-yndl.onrender.com/api/ressources`);
       setFilteredData(updatedData);
       setEditDialogOpen(false);
       setSnackbar({
@@ -366,7 +366,7 @@ const ResultsTable = ({ data = [], filters }) => {
       return;
     }
     try {
-      await axios.delete(`${API_BASE_URL}/api/ressources/delete/${row.personalid}`);
+      await axios.delete(`https://databank-yndl.onrender.com/api/ressources/delete/${row.personalid}`);
       setFilteredData((prev) => prev.filter((item) => item.personalid !== row.personalid));
       setSnackbar({
         open: true,

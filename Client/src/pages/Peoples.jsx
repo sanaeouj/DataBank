@@ -50,7 +50,7 @@ const People = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/ressources/all`
+          `https://databank-yndl.onrender.com/api/ressources/all`
         );
         const result = await response.json();
         setData(result);
