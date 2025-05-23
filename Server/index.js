@@ -119,9 +119,6 @@ app.post('/api/clients', async (req, res) => {
       companyRevenue,
     } = req.body;
 
-    if (!firstName || !lastName || !email || !company || !geo || !companyRevenue) {
-      return res.status(400).json({ error: "Les champs requis sont manquants." });
-    }
 
     await client.query('BEGIN');
 
