@@ -3,6 +3,56 @@ import Sidebar from "../components/Sidebar";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
+// Mapping pour l'import (labels lisibles et clés brutes)
+const importMapping = {
+  "First Name": "firstName",
+  "Last Name": "lastName",
+  "Title": "title",
+  "Seniority": "seniority",
+  "Departments": "departments",
+  "Mobile Phone": "mobilePhone",
+  "mobilePhone": "mobilePhone",
+  "Email": "email",
+  "email": "email",
+  "Email Status": "EmailStatus",
+  "EmailStatus": "EmailStatus",
+  "Company": "company.company",
+  "companycompany": "company.company",
+  "Company Email": "company.email",
+  "companyEmail": "company.email",
+  "Company Phone": "company.phone",
+  "companyPhone": "company.phone",
+  "Company Employees": "company.employees",
+  "companyemployees": "company.employees",
+  "Industry": "company.industry",
+  "companyindustry": "company.industry",
+  "SEO Description": "company.seoDescription",
+  "companySEO Description": "company.seoDescription",
+  "City": "geo.city",
+  "geocity": "geo.city",
+  "Address": "geo.address",
+  "geoaddress": "geo.address",
+  "State": "geo.state",
+  "geostate": "geo.state",
+  "Country": "geo.country",
+  "geocountry": "geo.country",
+  "Annual Revenue": "companyRevenue.annualRevenue",
+  "revenueAnnual Revenue": "companyRevenue.annualRevenue",
+  "Total Funding": "companyRevenue.totalFunding",
+  "revenueTotal Funding": "companyRevenue.totalFunding",
+  "Latest Funding": "companyRevenue.latestFunding",
+  "revenueLatest Funding": "companyRevenue.latestFunding",
+  "Latest Funding Amount": "companyRevenue.latestFundingAmount",
+  "revenueLatest Funding Amount": "companyRevenue.latestFundingAmount",
+  "LinkedIn": "social.linkedinUrl",
+  "socialCompany Linkedin Url": "social.linkedinUrl",
+  "Facebook": "social.facebookUrl",
+  "socialFacebook Url": "social.facebookUrl",
+  "Twitter": "social.twitterUrl",
+  "socialTwitter Url": "social.twitterUrl",
+  // Ajoute ici d'autres mappings si besoin
+};
+
 const AddPeople = () => {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -147,49 +197,20 @@ const AddPeople = () => {
     }
     try {
       for (const client of fileData) {
-        const newClient = {
-          firstName: client["First Name"] || "",
-          lastName: client["Last Name"] || "",
-          title: client.title || "",
-          seniority: client.seniority || "",
-          departments: client.departments || "",
-          mobilePhone: client.mobilePhone || "",
-          email: client.email || "",
-          EmailStatus: client.EmailStatus || "",
-          company: {
-            company: client["companycompany"] || "",
-            email: client.companyEmail || "",
-            phone: client.companyPhone || "",
-            employees: client.companyemployees || "",
-            industry: client.companyindustry || "",
-            seoDescription: client["companySEO Description"] || "",
-          },
-          geo: {
-            address: client.geoaddress || "",
-            city: client.geocity || "",
-            state: client.geostate || "",
-            country: client.geocountry || "",
-          },
-          social: {
-            linkedinUrl: client["socialCompany Linkedin Url"] || "",
-            facebookUrl: client["socialFacebook Url"] || "",
-            twitterUrl: client["socialTwitter Url"] || "",
-          },
-          companyRevenue: {
-            companyid: "",
-            companyName: client["companycompany"] || "",
-            annualRevenue: client["revenueAnnual Revenue"]
-              ? parseFloat(client["revenueAnnual Revenue"])
-              : 0,
-            totalFunding: client["revenueTotal Funding"]
-              ? parseFloat(client["revenueTotal Funding"])
-              : 0,
-            latestFunding: client["revenueLatest Funding"] || "",
-            latestFundingAmount: client["revenueLatest Funding Amount"]
-              ? parseFloat(client["revenueLatest Funding Amount"])
-              : 0,
-          },
-        };
+        // Création dynamique du client à partir du mapping
+        let newClient = JSON.parse(JSON.stringify(formData));
+        Object.entries(client).forEach(([csvKey, value]) => {
+          const formKey = importMapping[csvKey] || csvKey;
+          const keys = formKey.split(".");
+          if (keys.length === 1) {
+            newClient[keys[0]] = value;
+          } else if (keys.length === 2) {
+            newClient[keys[0]][keys[1]] = value;
+          } else if (keys.length === 3) {
+            newClient[keys[0]][keys[1]][keys[2]] = value;
+          }
+        });
+        // Vérifie les champs obligatoires
         if (
           !newClient.firstName ||
           !newClient.lastName ||
@@ -269,8 +290,8 @@ const AddPeople = () => {
           companyRevenue: {
             companyid: "",
             companyName: "",
-            annualRevenue: 0,
-            totalFunding: 0,
+            annualRevenue: "",
+            totalFunding: "",
             latestFunding: "",
             latestFundingAmount: "",
           },

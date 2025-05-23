@@ -100,7 +100,7 @@ const People = () => {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Box
-        sx={{ display: "flex", height: "100vh", bgcolor: "#333", flexDirection: { xs: 'column', md: 'row' } }}
+        sx={{ display: "flex", height: "90vh", bgcolor: "#333", flexDirection: { xs: 'column', md: 'row' } }}
       >
         <Sidebar />
         {loading ? (
@@ -118,7 +118,7 @@ const People = () => {
           />
         )}
         <Box sx={{ flexGrow: 1, p: 2, bgcolor: "#333" }}>
-          <Typography variant="h5" sx={{ mb: 2, color: "white" }}>
+          <Typography variant="h5" sx={{ mb: 3, color: "white" }}>
             People List
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
@@ -148,6 +148,7 @@ const People = () => {
                 color: "white",
                 fontSize: "0.8rem",
                 padding: "4px 8px",
+                marginBottom: "8px",
                 backgroundColor: "#333",
                 "&:hover": {
                   backgroundColor: "black",

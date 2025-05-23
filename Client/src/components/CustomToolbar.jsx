@@ -22,7 +22,7 @@ const CustomToolbar = ({ exportToCSV, exportToExcel, setSettingsDialogOpen }) =>
       <Button
         onClick={(e) => setExportMenuAnchorEl(e.currentTarget)}
         startIcon={<DownloadIcon />}
-        style={{ color: "white", marginRight: "16px" }}
+        style={{ color: "white", margin: "16px" }}
       >
         Export
       </Button>

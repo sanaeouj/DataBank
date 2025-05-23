@@ -20,7 +20,33 @@ import CustomToolbar from "./CustomToolbar";
 import EditDialog from "./EditDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-
+const headerMapping = {
+  "First Name": "First Name",
+  "Last Name": "Last Name",
+  title: "Title",
+  seniority: "Seniority",
+  departments: "Departments",
+  mobilePhone: "Mobile Phone",
+  email: "Email",
+  EmailStatus: "Email Status",
+  companycompany: "Company",
+  companyEmail: "Company Email",
+  companyPhone: "Company Phone",
+  companyemployees: "Company Employees",
+  companyindustry: "Industry",
+  "companySEO Description": "SEO Description",
+  geocity: "City",
+  geoaddress: "Address",
+  geostate: "State",
+  geocountry: "Country",
+  "revenueAnnual Revenue": "Annual Revenue",
+  "revenueTotal Funding": "Total Funding",
+  "revenueLatest Funding": "Latest Funding",
+  "revenueLatest Funding Amount": "Latest Funding Amount",
+  "socialCompany Linkedin Url": "LinkedIn",
+  "socialFacebook Url": "Facebook",
+  "socialTwitter Url": "Twitter",
+};
 const ResultsTable = ({ data = [], filters }) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({});
@@ -364,56 +390,59 @@ const ResultsTable = ({ data = [], filters }) => {
   };
 
   const exportToCSV = () => {
-    if (!filteredData.length) {
-      alert("No data to export.");
-      return;
-    }
-    const headers = Object.keys(filteredData[0]).filter(
-      (key) => !hiddenColumns.includes(key)
-    );
-    const csvContent = [
-      headers.join(","),
-      ...filteredData.map((row) =>
-        headers
-          .map((header) => {
-            const cellData = (row[header] || "").toString().replace(/"/g, '""');
-            return `"${cellData}"`;
-          })
-          .join(",")
-      ),
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    if (navigator.msSaveBlob) {
-      navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
-    } else {
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", "ResultsTable_Export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
+  if (!filteredData.length) {
+    alert("No data to export.");
+    return;
+  }
+  const headers = Object.keys(filteredData[0]).filter(
+    (key) => !hiddenColumns.includes(key)
+  );
+  // Utilise les labels du headerMapping pour la première ligne
+  const csvContent = [
+    headers.map((key) => headerMapping[key] || key).join(","),
+    ...filteredData.map((row) =>
+      headers
+        .map((header) => {
+          const cellData = (row[header] || "").toString().replace(/"/g, '""');
+          return `"${cellData}"`;
+        })
+        .join(",")
+    ),
+  ].join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  if (navigator.msSaveBlob) {
+    navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
+  } else {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "ResultsTable_Export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
 
   const exportToExcel = () => {
-    if (!filteredData.length) {
-      alert("No data to export.");
-      return;
-    }
-    const filteredExportData = filteredData.map((row) => {
-      const newRow = {};
-      Object.entries(row).forEach(([key, value]) => {
-        if (!hiddenColumns.includes(key)) {
-          newRow[key] = value;
-        }
-      });
-      return newRow;
+  if (!filteredData.length) {
+    alert("No data to export.");
+    return;
+  }
+  const headers = Object.keys(filteredData[0]).filter(
+    (key) => !hiddenColumns.includes(key)
+  );
+  // Remplace les clés par les labels dans chaque ligne
+  const filteredExportData = filteredData.map((row) => {
+    const newRow = {};
+    headers.forEach((key) => {
+      newRow[headerMapping[key] || key] = row[key];
     });
-    const worksheet = XLSX.utils.json_to_sheet(filteredExportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-    XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
-  };
+    return newRow;
+  });
+  const worksheet = XLSX.utils.json_to_sheet(filteredExportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+  XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
+};
 
   const SettingsDialog = () => (
     <Dialog
