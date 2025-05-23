@@ -321,7 +321,7 @@ const AddPeople = () => {
     >
       <Sidebar />
       <div style={{ flexGrow: 1, padding: "50px", color: "#333" }}>
-        <h1 style={{ color: "#fff", marginBottom: "20px" }}>Add Client</h1>
+        <h1 style={{ color: "#fff", marginBottom: "20px" }}>Add People</h1>
 
         <div style={formContainerStyle}>
           <h3 style={{ color: "#fff" }}>Import Clients from File</h3>
