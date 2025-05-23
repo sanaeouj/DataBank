@@ -42,7 +42,8 @@ const ResultsTable = ({ data = [], filters }) => {
     revenueDetails: {},
     socialDetails: {},
   });
-  
+
+  // Les colonnes à masquer (tous les ID)
   const hiddenColumns = [
     "personalid",
     "companycompanyid",
@@ -55,24 +56,31 @@ const ResultsTable = ({ data = [], filters }) => {
     "socialsocialid",
   ];
 
-  useEffect(() => {
-    const applyFilters = () => {
-      if (!data || !data.length) return [];
-      return flattenData(data).filter((row) => {
-        return Object.entries(filterValues).every(([key, value]) => {
-          if (!value) return true;
-          const cellValue = row[key]?.toString().toLowerCase() || "";
-          return cellValue.includes(value.toLowerCase());
-        });
-      });
-    };
-    setFilteredData(applyFilters());
-  }, [data, filterValues]);
+  // Aplatir tous les objets et sous-objets pour que chaque attribut soit une colonne
+  const flattenData = (data) =>
+    data.map((item) => {
+      const flatten = (obj, prefix = "") => {
+        let result = {};
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const fullKey = prefix ? `${prefix}.${key}` : key;
+            if (
+              obj[key] &&
+              typeof obj[key] === "object" &&
+              !Array.isArray(obj[key])
+            ) {
+              Object.assign(result, flatten(obj[key], fullKey));
+            } else {
+              result[fullKey] = obj[key] !== undefined ? obj[key] : "N/A";
+            }
+          }
+        }
+        return result;
+      };
+      return flatten(item);
+    });
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("fr-FR");
-  };
-
+  // Générer dynamiquement toutes les colonnes à partir des données aplanies
   const getColumnsFromData = (data) => {
     if (!data || !data.length) return [];
     const columns = [];
@@ -152,28 +160,23 @@ const ResultsTable = ({ data = [], filters }) => {
     return columns;
   };
 
-const flattenData = (data) =>
-  data.map((item) => {
-    const flatten = (obj, prefix = "") => {
-      let result = {};
-      for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          const fullKey = prefix ? `${prefix}.${key}` : key;
-          if (
-            obj[key] &&
-            typeof obj[key] === "object" &&
-            !Array.isArray(obj[key])
-          ) {
-            Object.assign(result, flatten(obj[key], fullKey));
-          } else {
-            result[fullKey] = obj[key] !== undefined ? obj[key] : "N/A";
-          }
-        }
-      }
-      return result;
+  useEffect(() => {
+    const applyFilters = () => {
+      if (!data || !data.length) return [];
+      return flattenData(data).filter((row) => {
+        return Object.entries(filterValues).every(([key, value]) => {
+          if (!value) return true;
+          const cellValue = row[key]?.toString().toLowerCase() || "";
+          return cellValue.includes(value.toLowerCase());
+        });
+      });
     };
-    return flatten(item);
-  });
+    setFilteredData(applyFilters());
+  }, [data, filterValues]);
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("fr-FR");
+  };
 
   const handleEditClick = (row) => {
     setCurrentRow(row);
@@ -212,7 +215,7 @@ const flattenData = (data) =>
         twitterUrl: row['socialTwitter Url'] || '',
       },
     };
-     setEditFormData(formData);
+    setEditFormData(formData);
     setEditDialogOpen(true);
   };
 
@@ -262,7 +265,7 @@ const flattenData = (data) =>
           twitterUrl: editFormData.socialDetails.twitterUrl || '',
         }
       };
-       const response = await axios.put(
+      await axios.put(
         `https://databank-yndl.onrender.com/api/ressources/update/${currentRow.personalid}`,
         updateData,
         {
@@ -271,7 +274,6 @@ const flattenData = (data) =>
           },
         }
       );
-   
       const updatedData = filteredData.map((row) => {
         if (row.personalid === currentRow.personalid) {
           return {
@@ -284,22 +286,18 @@ const flattenData = (data) =>
             mobilePhone: updateData.personalDetails.mobilePhone,
             email: updateData.personalDetails.email,
             EmailStatus: updateData.personalDetails.EmailStatus,
-            
             companycompany: updateData.companyDetails.company,
             companyEmail: updateData.companyDetails.email,
             companyPhone: updateData.companyDetails.phone,
             companyemployees: updateData.companyDetails.employees,
             companyindustry: updateData.companyDetails.industry,
             'companySEO Description': updateData.companyDetails.seoDescription,
-            
             geoaddress: updateData.geoDetails.address,
             geocity: updateData.geoDetails.city,
             geostate: updateData.geoDetails.state,
             geocountry: updateData.geoDetails.country,
-            
             'revenueLatest Funding': updateData.revenueDetails.latestFunding,
             'revenueLatest Funding Amount': updateData.revenueDetails.latestFundingAmount,
-            
             'socialCompany Linkedin Url': updateData.socialDetails.linkedinUrl,
             'socialFacebook Url': updateData.socialDetails.facebookUrl,
             'socialTwitter Url': updateData.socialDetails.twitterUrl,
@@ -307,8 +305,6 @@ const flattenData = (data) =>
         }
         return row;
       });
-          const refreshedData = await axios.get('https://databank-yndl.onrender.com/api/ressources');
-
       setFilteredData(updatedData);
       setEditDialogOpen(false);
       setSnackbar({
@@ -318,20 +314,15 @@ const flattenData = (data) =>
       });
     } catch (error) {
       console.error("Erreur lors de la mise à jour:", error);
-      
       let errorMessage = "Échec de la mise à jour";
       if (error.response) {
-        console.error("Response data:", error.response.data);
-        console.error("Response status:", error.response.status);
-        
         if (error.response.data && error.response.data.error) {
           errorMessage = error.response.data.error;
         }
       } else if (error.request) {
-        console.error("Request:", error.request);
         errorMessage = "Pas de réponse du serveur";
       } else {
-        console.error("Error message:", error.message);
+        errorMessage = error.message;
       }
       setSnackbar({
         open: true,
@@ -354,7 +345,6 @@ const flattenData = (data) =>
         severity: "success",
       });
     } catch (error) {
-      console.error("Error deleting row:", error);
       setSnackbar({
         open: true,
         message: "Failed to delete row.",
