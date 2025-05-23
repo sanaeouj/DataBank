@@ -148,7 +148,7 @@ const AddPeople = () => {
 
   const addClientToDatabase = async (client) => {
     try {
-    const response = await fetch(`${API_BASE_URL}/api/clients`, {
+    const response = await fetch(`https://databank-yndl.onrender.com/api/clients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(client),
