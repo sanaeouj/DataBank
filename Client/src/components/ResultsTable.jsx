@@ -24,30 +24,46 @@ import DeleteIcon from "@mui/icons-material/Delete";
 const headerMapping = {
   "First Name": "First Name",
   "Last Name": "Last Name",
-  title: "Title",
-  seniority: "Seniority",
-  departments: "Departments",
-  mobilePhone: "Mobile Phone",
-  email: "Email",
-  EmailStatus: "Email Status",
-  companycompany: "Company",
-  companyEmail: "Company Email",
-  companyPhone: "Company Phone",
-  companyemployees: "Company Employees",
-  companyindustry: "Industry",
-  "companySEO Description": "SEO Description",
-  geocity: "City",
-  geoaddress: "Address",
-  geostate: "State",
-  geocountry: "Country",
-  "revenueAnnual Revenue": "Annual Revenue",
-  "revenueTotal Funding": "Total Funding",
-  "revenueLatest Funding": "Latest Funding",
-  "revenueLatest Funding Amount": "Latest Funding Amount",
-  "socialCompany Linkedin Url": "LinkedIn",
-  "socialFacebook Url": "Facebook",
-  "socialTwitter Url": "Twitter",
+  "title": "Title",
+  "seniority": "Seniority",
+  "departments": "Departments",
+  "mobilePhone": "Mobile Phone",
+  "email": "Email",
+  "EmailStatus": "Email Status",
+  "company.company": "Company",
+  "company.email": "Company Email",
+  "company.phone": "Company Phone",
+  "company.employees": "Company Employees",
+  "company.industry": "Industry",
+  "company.SEO Description": "SEO Description",
+  "geo.city": "City",
+  "geo.address": "Address",
+  "geo.state": "State",
+  "geo.country": "Country",
+  "revenue.Annual Revenue": "Annual Revenue",
+  "revenue.Total Funding": "Total Funding",
+  "revenue.Latest Funding": "Latest Funding",
+  "revenue.Latest Funding Amount": "Latest Funding Amount",
+  "social.Company Linkedin Url": "LinkedIn",
+  "social.Facebook Url": "Facebook",
+  "social.Twitter Url": "Twitter",
 };
+
+const hiddenColumns = [
+  "personalid",
+  "companyid",
+  "geoid",
+  "revenueid",
+  "socialid",
+  "company.personalid",
+  "company.companyid",
+  "geo.geoid",
+  "geo.companyid",
+  "revenue.revenueid",
+  "revenue.companyid",
+  "social.companyid",
+  "social.socialid",
+];
 
 const ResultsTable = ({ data = [], filters }) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
@@ -70,23 +86,87 @@ const ResultsTable = ({ data = [], filters }) => {
     revenueDetails: {},
     socialDetails: {},
   });
-  
-  const hiddenColumns = [
-    "personalid",
-    "companycompanyid",
-    "companypersonalid",
-    "geogeoid",
-    "geocompanyid",
-    "revenuerevenueid",
-    "revenuecompanyid",
-    "socialcompanyid",
-    "socialsocialid",
-  ];
 
+  // Flatten data structure
+  const flattenData = (data) => {
+    return data.map((item) => {
+      const flattenObject = (obj, prefix = "") => {
+        return Object.keys(obj).reduce((acc, key) => {
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+          if (
+            typeof obj[key] === "object" &&
+            obj[key] !== null &&
+            !Array.isArray(obj[key])
+          ) {
+            Object.assign(acc, flattenObject(obj[key], fullKey));
+          } else {
+            acc[fullKey] = obj[key] !== undefined ? obj[key] : "N/A";
+          }
+          return acc;
+        }, {});
+      };
+      return flattenObject(item);
+    });
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("fr-FR");
+  };
+
+  // Get columns from flattened data
+  const getColumnsFromData = (data) => {
+    if (!data || !data.length) return [];
+    
+    // Get sample flattened item to extract all possible columns
+    const sampleItem = flattenData([data[0]])[0];
+    const allKeys = Object.keys(sampleItem).filter(
+      (key) => !hiddenColumns.includes(key)
+    );
+
+    return allKeys.map((key) => ({
+      field: key,
+      headerName:
+        headerMapping[key] ||
+        key
+          .split(".")
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(" "),
+      width: 200,
+      renderCell: (params) => {
+        if (params.value === undefined || params.value === null) return "N/A";
+        
+        if (key.includes("Latest Funding") && !key.includes("Amount")) {
+          return formatDate(params.value);
+        } else if (/Url$/i.test(key)) {
+          return params.value ? (
+            <a
+              href={
+                params.value.startsWith("http")
+                  ? params.value
+                  : `https://${params.value}`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#90caf9" }}
+            >
+              Link
+            </a>
+          ) : "N/A";
+        }
+        return params.value || "N/A";
+      },
+    }));
+  };
+
+  // Apply filters to data
   useEffect(() => {
     const applyFilters = () => {
       if (!data || !data.length) return [];
-      return flattenData(data).filter((row) => {
+      
+      const flattened = flattenData(data);
+      return flattened.filter((row) => {
         return Object.entries(filterValues).every(([key, value]) => {
           if (!value) return true;
           const cellValue = row[key]?.toString().toLowerCase() || "";
@@ -94,155 +174,63 @@ const ResultsTable = ({ data = [], filters }) => {
         });
       });
     };
+    
     setFilteredData(applyFilters());
   }, [data, filterValues]);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("fr-FR");
-  };
+  // Initialize visible columns
+  useEffect(() => {
+    if (data && data.length) {
+      const columns = getColumnsFromData(data);
+      setVisibleColumns(
+        columns.map((col) => ({
+          ...col,
+          visible: true,
+        }))
+      );
+    }
+  }, [data]);
 
-  const getColumnsFromData = (data) => {
-    if (!data || !data.length) return [];
-    const columns = [];
-    const headerMapping = {
-      mobilePhone: "Mobile Phone",
-      EmailStatus: "Email Status",
-      "company.company": "Company",
-      "company.email": "Company Email",
-      "company.phone": "Company Phone",
-      "company.employees": "Company Employees",
-      "company.industry": "Industry",
-      "company.SEO Description": "SEO Description",
-      "company.Annual Revenue": "Annual Revenue",
-      "company.Total Funding": "Total Funding",
-      "geo.address": "Address",
-      "geo.city": "City",
-      "geo.state": "State",
-      "geo.country": "Country",
-      "social.Company Linkedin Url": "LinkedIn",
-      "social.Facebook Url": "Facebook",
-      "social.Twitter Url": "Twitter",
-      "revenue.Total Funding": "Total Funding",
-      "revenue.Annual Revenue": "Annual Revenue",
-      "revenue.Latest Funding Amount": "Latest Funding Amount",
-      "revenue.Latest Funding": "Latest Funding",
-    };
-
-    const extractFields = (obj, prefix = "") => {
-      for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          const fullKey = prefix ? `${prefix}.${key}` : key;
-          if (!hiddenColumns.includes(fullKey.replace(/\./g, ""))) {
-            if (
-              typeof obj[key] === "object" &&
-              obj[key] !== null &&
-              !Array.isArray(obj[key])
-            ) {
-              extractFields(obj[key], fullKey);
-            } else {
-              columns.push({
-                field: fullKey.replace(/\./g, ""),
-                headerName:
-                  headerMapping[fullKey] ||
-                  fullKey
-                    .split(".")
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" "),
-                width: 200,
-                renderCell: (params) => {
-                  if (params.value === undefined || params.value === null) return "N/A";
-                  
-                  if (fullKey === "revenue.Latest Funding") {
-                    return formatDate(params.value);
-                  } else if (/Url$/i.test(fullKey)) {
-                    return params.value ? (
-                      <a
-                        href={
-                          params.value.startsWith("http://") ||
-                          params.value.startsWith("https://")
-                            ? params.value
-                            : `http://${params.value}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: "#90caf9" }}
-                      >
-                        Link
-                      </a>
-                    ) : "N/A";
-                  }
-                  return params.value || "N/A";
-                },
-              });
-            }
-          }
-        }
-      }
-    };
-    extractFields(data[0]);
-    return columns;
-  };
-
-  const flattenData = (data) =>
-    data.map((item) => {
-      const flatten = (obj, prefix = "") => {
-        let result = {};
-        for (const key in obj) {
-          if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            const fullKey = prefix ? `${prefix}.${key}` : key;
-            if (
-              obj[key] &&
-              typeof obj[key] === "object" &&
-              !Array.isArray(obj[key])
-            ) {
-              Object.assign(result, flatten(obj[key], fullKey));
-            } else {
-              result[fullKey.replace(/\./g, "")] =
-                obj[key] !== undefined ? obj[key] : "N/A";
-            }
-          }
-        }
-        return result;
-      };
-      return flatten(item);
-    });
-
+  // Handle edit click
   const handleEditClick = (row) => {
     setCurrentRow(row);
     const formData = {
       personalDetails: {
-        firstName: row['First Name'] || '',
-        lastName: row['Last Name'] || '', 
-        title: row.title || "",
-        seniority: row.seniority || "",
-        departments: row.departments || "",
-        mobilePhone: row.mobilePhone || "",
-        email: row.email || "",
-        EmailStatus: row.EmailStatus || "",
+        firstName: row["First Name"] || "",
+        lastName: row["Last Name"] || "",
+        title: row["title"] || "",
+        seniority: row["seniority"] || "",
+        departments: row["departments"] || "",
+        mobilePhone: row["mobilePhone"] || "",
+        email: row["email"] || "",
+        EmailStatus: row["EmailStatus"] || "",
       },
       companyDetails: {
-        company: row.companycompany || "",
-        email: row.companyEmail || "",
-        phone: row.companyPhone || "",
-        employees: row.companyemployees ? row.companyemployees.toString() : "",
-        industry: row.companyindustry || "",
-        seoDescription: row['companySEO Description'] || "",  
+        company: row["company.company"] || "",
+        email: row["company.email"] || "",
+        phone: row["company.phone"] || "",
+        employees: row["company.employees"] ? row["company.employees"].toString() : "",
+        industry: row["company.industry"] || "",
+        seoDescription: row["company.SEO Description"] || "",
       },
       geoDetails: {
-        address: row.geoaddress || "",
-        city: row.geocity || "",
-        state: row.geostate || "",
-        country: row.geocountry || "",
+        address: row["geo.address"] || "",
+        city: row["geo.city"] || "",
+        state: row["geo.state"] || "",
+        country: row["geo.country"] || "",
       },
       revenueDetails: {
-        latestFunding: row['revenueLatest Funding'] ? formatDateForInput(row['revenueLatest Funding']) : "",
-        latestFundingAmount: row['revenueLatest Funding Amount'] ? row['revenueLatest Funding Amount'].toString() : "", 
+        latestFunding: row["revenue.Latest Funding"]
+          ? formatDateForInput(row["revenue.Latest Funding"])
+          : "",
+        latestFundingAmount: row["revenue.Latest Funding Amount"]
+          ? row["revenue.Latest Funding Amount"].toString()
+          : "",
       },
       socialDetails: {
-        linkedinUrl: row['socialCompany Linkedin Url'] || '',
-        facebookUrl: row['socialFacebook Url'] || '',
-        twitterUrl: row['socialTwitter Url'] || '',
+        linkedinUrl: row["social.Company Linkedin Url"] || "",
+        facebookUrl: row["social.Facebook Url"] || "",
+        twitterUrl: row["social.Twitter Url"] || "",
       },
     };
     setEditFormData(formData);
@@ -252,7 +240,7 @@ const ResultsTable = ({ data = [], filters }) => {
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toISOString().split('T')[0];  
+    return date.toISOString().split("T")[0];
   };
 
   const handleUpdateRow = async () => {
@@ -260,58 +248,59 @@ const ResultsTable = ({ data = [], filters }) => {
       if (!currentRow || !currentRow.personalid) {
         throw new Error("No row selected for update");
       }
+
       const updateData = {
         personalDetails: {
-          firstName: editFormData.personalDetails.firstName || '',
-          lastName: editFormData.personalDetails.lastName || '',
-          title: editFormData.personalDetails.title || '',
-          seniority: editFormData.personalDetails.seniority || '',
-          departments: editFormData.personalDetails.departments || '',
-          mobilePhone: editFormData.personalDetails.mobilePhone || '',
-          email: editFormData.personalDetails.email || '',
-          EmailStatus: editFormData.personalDetails.EmailStatus || '',
+          firstName: editFormData.personalDetails.firstName || "",
+          lastName: editFormData.personalDetails.lastName || "",
+          title: editFormData.personalDetails.title || "",
+          seniority: editFormData.personalDetails.seniority || "",
+          departments: editFormData.personalDetails.departments || "",
+          mobilePhone: editFormData.personalDetails.mobilePhone || "",
+          email: editFormData.personalDetails.email || "",
+          EmailStatus: editFormData.personalDetails.EmailStatus || "",
         },
         companyDetails: {
-          company: editFormData.companyDetails.company || '',
-          email: editFormData.companyDetails.email || '',
-          phone: editFormData.companyDetails.phone || '',
-          employees: editFormData.companyDetails.employees || '',
-          industry: editFormData.companyDetails.industry || '',
-          seoDescription: editFormData.companyDetails.seoDescription || '',
+          company: editFormData.companyDetails.company || "",
+          email: editFormData.companyDetails.email || "",
+          phone: editFormData.companyDetails.phone || "",
+          employees: editFormData.companyDetails.employees || "",
+          industry: editFormData.companyDetails.industry || "",
+          seoDescription: editFormData.companyDetails.seoDescription || "",
         },
         geoDetails: {
-          address: editFormData.geoDetails.address || '',
-          city: editFormData.geoDetails.city || '',
-          state: editFormData.geoDetails.state || '',
-          country: editFormData.geoDetails.country || '',
+          address: editFormData.geoDetails.address || "",
+          city: editFormData.geoDetails.city || "",
+          state: editFormData.geoDetails.state || "",
+          country: editFormData.geoDetails.country || "",
         },
         revenueDetails: {
           latestFunding: editFormData.revenueDetails.latestFunding || null,
-          latestFundingAmount: editFormData.revenueDetails.latestFundingAmount || '',
+          latestFundingAmount: editFormData.revenueDetails.latestFundingAmount || "",
         },
         socialDetails: {
-          linkedinUrl: editFormData.socialDetails.linkedinUrl || '',
-          facebookUrl: editFormData.socialDetails.facebookUrl || '',
-          twitterUrl: editFormData.socialDetails.twitterUrl || '',
-        }
+          linkedinUrl: editFormData.socialDetails.linkedinUrl || "",
+          facebookUrl: editFormData.socialDetails.facebookUrl || "",
+          twitterUrl: editFormData.socialDetails.twitterUrl || "",
+        },
       };
-      
+
       const response = await axios.put(
         `https://databank-yndl.onrender.com/api/ressources/update/${currentRow.personalid}`,
         updateData,
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
-   
+
       const updatedData = filteredData.map((row) => {
         if (row.personalid === currentRow.personalid) {
           return {
             ...row,
-            'First Name': updateData.personalDetails.firstName,
-            'Last Name': updateData.personalDetails.lastName,
+            "First Name": updateData.personalDetails.firstName,
+            "Last Name": updateData.personalDetails.lastName,
             title: updateData.personalDetails.title,
             seniority: updateData.personalDetails.seniority,
             departments: updateData.personalDetails.departments,
@@ -319,24 +308,24 @@ const ResultsTable = ({ data = [], filters }) => {
             email: updateData.personalDetails.email,
             EmailStatus: updateData.personalDetails.EmailStatus,
             
-            companycompany: updateData.companyDetails.company,
-            companyEmail: updateData.companyDetails.email,
-            companyPhone: updateData.companyDetails.phone,
-            companyemployees: updateData.companyDetails.employees,
-            companyindustry: updateData.companyDetails.industry,
-            'companySEO Description': updateData.companyDetails.seoDescription,
+            "company.company": updateData.companyDetails.company,
+            "company.email": updateData.companyDetails.email,
+            "company.phone": updateData.companyDetails.phone,
+            "company.employees": updateData.companyDetails.employees,
+            "company.industry": updateData.companyDetails.industry,
+            "company.SEO Description": updateData.companyDetails.seoDescription,
             
-            geoaddress: updateData.geoDetails.address,
-            geocity: updateData.geoDetails.city,
-            geostate: updateData.geoDetails.state,
-            geocountry: updateData.geoDetails.country,
+            "geo.address": updateData.geoDetails.address,
+            "geo.city": updateData.geoDetails.city,
+            "geo.state": updateData.geoDetails.state,
+            "geo.country": updateData.geoDetails.country,
             
-            'revenueLatest Funding': updateData.revenueDetails.latestFunding,
-            'revenueLatest Funding Amount': updateData.revenueDetails.latestFundingAmount,
+            "revenue.Latest Funding": updateData.revenueDetails.latestFunding,
+            "revenue.Latest Funding Amount": updateData.revenueDetails.latestFundingAmount,
             
-            'socialCompany Linkedin Url': updateData.socialDetails.linkedinUrl,
-            'socialFacebook Url': updateData.socialDetails.facebookUrl,
-            'socialTwitter Url': updateData.socialDetails.twitterUrl,
+            "social.Company Linkedin Url": updateData.socialDetails.linkedinUrl,
+            "social.Facebook Url": updateData.socialDetails.facebookUrl,
+            "social.Twitter Url": updateData.socialDetails.twitterUrl,
           };
         }
         return row;
@@ -354,17 +343,11 @@ const ResultsTable = ({ data = [], filters }) => {
       
       let errorMessage = "Échec de la mise à jour";
       if (error.response) {
-        console.error("Response data:", error.response.data);
-        console.error("Response status:", error.response.status);
-        
         if (error.response.data && error.response.data.error) {
           errorMessage = error.response.data.error;
         }
       } else if (error.request) {
-        console.error("Request:", error.request);
         errorMessage = "Pas de réponse du serveur";
-      } else {
-        console.error("Error message:", error.message);
       }
       
       setSnackbar({
@@ -380,8 +363,12 @@ const ResultsTable = ({ data = [], filters }) => {
       return;
     }
     try {
-      await axios.delete(`https://databank-yndl.onrender.com/api/ressources/delete/${row.personalid}`);
-      setFilteredData((prev) => prev.filter((item) => item.personalid !== row.personalid));
+      await axios.delete(
+        `https://databank-yndl.onrender.com/api/ressources/delete/${row.personalid}`
+      );
+      setFilteredData((prev) =>
+        prev.filter((item) => item.personalid !== row.personalid)
+      );
       setSnackbar({
         open: true,
         message: "Row deleted successfully!",
@@ -417,16 +404,12 @@ const ResultsTable = ({ data = [], filters }) => {
       ),
     ].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    if (navigator.msSaveBlob) {
-      navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
-    } else {
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", "ResultsTable_Export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "ResultsTable_Export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const exportToExcel = () => {
@@ -457,7 +440,7 @@ const ResultsTable = ({ data = [], filters }) => {
       sx={{ backgroundColor: "#333", color: "white" }}
     >
       <DialogTitle style={{ backgroundColor: "#333", color: "white" }}>
-        Filter
+        Column Visibility
       </DialogTitle>
       <DialogContent style={{ backgroundColor: "#333", color: "white" }}>
         {getColumnsFromData(data).map((col) => {
@@ -499,10 +482,9 @@ const ResultsTable = ({ data = [], filters }) => {
   );
 
   const displayedColumns = [
-    ...getColumnsFromData(data).filter((col) => {
-      const visibleCol = visibleColumns.find((vCol) => vCol.field === col.field);
-      return visibleCol ? visibleCol.visible : true;
-    }),
+    ...(visibleColumns.length
+      ? visibleColumns.filter((col) => col.visible)
+      : getColumnsFromData(data)),
     {
       field: "actions",
       headerName: "Actions",
@@ -541,7 +523,7 @@ const ResultsTable = ({ data = [], filters }) => {
         color: "white",
       }}
     >
-      <CustomToolbar 
+      <CustomToolbar
         exportToCSV={exportToCSV}
         exportToExcel={exportToExcel}
         setSettingsDialogOpen={setSettingsDialogOpen}
@@ -554,27 +536,29 @@ const ResultsTable = ({ data = [], filters }) => {
           padding: 2,
         }}
       >
-        {displayedColumns.map((col) => (
-          <TextField
-            key={col.field}
-            label={col.headerName}
-            value={filterValues[col.field] || ""}
-            onChange={(e) =>
-              setFilterValues((prev) => ({
-                ...prev,
-                [col.field]: e.target.value,
-              }))
-            }
-            variant="outlined"
-            size="small"
-            sx={{
-              flex: 1,
-              minWidth: "150px",
-            }}
-            InputProps={{ style: { color: "white" } }}
-            InputLabelProps={{ style: { color: "white" } }}
-          />
-        ))}
+        {displayedColumns
+          .filter((col) => col.field !== "actions")
+          .map((col) => (
+            <TextField
+              key={col.field}
+              label={col.headerName}
+              value={filterValues[col.field] || ""}
+              onChange={(e) =>
+                setFilterValues((prev) => ({
+                  ...prev,
+                  [col.field]: e.target.value,
+                }))
+              }
+              variant="outlined"
+              size="small"
+              sx={{
+                flex: 1,
+                minWidth: "150px",
+              }}
+              InputProps={{ style: { color: "white" } }}
+              InputLabelProps={{ style: { color: "white" } }}
+            />
+          ))}
       </Box>
       <Box
         sx={{
@@ -589,7 +573,7 @@ const ResultsTable = ({ data = [], filters }) => {
         }}
       >
         <Typography variant="body1" sx={{ color: "white" }}>
-          Total Filter: {filteredData.length}
+          Total Records: {filteredData.length}
         </Typography>
       </Box>
       <DataGrid
@@ -608,7 +592,10 @@ const ResultsTable = ({ data = [], filters }) => {
           backgroundColor: "#333",
           color: "white",
           width: `${Math.max(
-            displayedColumns.reduce((total, col) => total + (col.width || 200), 0),
+            displayedColumns.reduce(
+              (total, col) => total + (col.width || 200),
+              0
+            ),
             window.innerWidth
           )}px`,
           "& .MuiDataGrid-columnHeaders": {
@@ -628,22 +615,13 @@ const ResultsTable = ({ data = [], filters }) => {
             backgroundColor: "#1e1e1e",
             color: "white",
           },
-          "& .MuiDataGrid-filler": {
+          "& .MuiDataGrid-cell": {
             backgroundColor: "#1e1e1e",
             color: "white",
-          },
-          "& .MuiDataGrid-cell:hover": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-          },
-          "& .MuiDataGrid-footerCell": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-          },
-          "& .MuiDataGrid-columnHeader": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
           },
           "& .MuiDataGrid-columnHeaderTitle": {
             color: "white",
@@ -652,29 +630,6 @@ const ResultsTable = ({ data = [], filters }) => {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-          },
-          "& .MuiDataGrid-columnHeaderCheckbox": { color: "white" },
-          "& .MuiDataGrid-rowCheckbox": { color: "white" },
-          "& .MuiTablePagination-displayedRows": { color: "white" },
-          "& .MuiTablePagination-actions": { color: "white" },
-          "& .MuiTablePagination-selectIcon": { color: "white" },
-          "& .MuiTablePagination-selectLabel": { color: "white" },
-          "& .MuiTablePagination-menuItem": { color: "white" },
-          "& .MuiTablePagination-menuItem:hover": {
-            backgroundColor: "#444",
-            color: "white",
-          },
-          "& .MuiTablePagination-menuItem.selected": {
-            backgroundColor: "#444",
-            color: "white",
-          },
-          "& .MuiDataGrid-cell": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
           },
         }}
       />
