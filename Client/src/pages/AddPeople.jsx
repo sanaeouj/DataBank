@@ -196,8 +196,7 @@ const AddPeople = () => {
     }
     try {
       for (const client of fileData) {
-        // Création dynamique du client à partir du mapping
-        let newClient = JSON.parse(JSON.stringify(formData));
+         let newClient = JSON.parse(JSON.stringify(formData));
         Object.entries(client).forEach(([csvKey, value]) => {
           const formKey = importMapping[csvKey] || csvKey;
           const keys = formKey.split(".");
@@ -209,8 +208,7 @@ const AddPeople = () => {
             newClient[keys[0]][keys[1]][keys[2]] = value;
           }
         });
-        // Vérifie les champs obligatoires
-        if (
+         if (
           !newClient.firstName ||
           !newClient.lastName ||
           !newClient.email ||
@@ -251,7 +249,7 @@ const AddPeople = () => {
     e.preventDefault();
     try {
       const payload = { ...formData };
-    const response = await fetch(`${API_BASE_URL}/api/clients`, {
+    const response = await fetch(`https://databank-yndl.onrender.com/api/clients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
