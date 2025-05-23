@@ -104,7 +104,7 @@ const ResultsTable = ({ data = [], filters }) => {
       for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
           const fullKey = prefix ? `${prefix}.${key}` : key;
-          if (!hiddenColumns.includes(fullKey.replace(/\./g, ""))) {
+          if (!hiddenColumns.includes(fullKey)) {
             if (
               typeof obj[key] === "object" &&
               obj[key] !== null &&
@@ -113,7 +113,7 @@ const ResultsTable = ({ data = [], filters }) => {
               extractFields(obj[key], fullKey);
             } else {
               columns.push({
-                field: fullKey.replace(/\./g, ""),
+                field: fullKey,
                 headerName:
                   headerMapping[fullKey] ||
                   fullKey
@@ -127,8 +127,9 @@ const ResultsTable = ({ data = [], filters }) => {
                   ) : /Url$/i.test(fullKey) ? (
                     <a
                       href={
-                        params.value.startsWith("http://") ||
-                        params.value.startsWith("https://")
+                        params.value &&
+                        (params.value.startsWith("http://") ||
+                          params.value.startsWith("https://"))
                           ? params.value
                           : `http://${params.value}`
                       }
@@ -151,29 +152,28 @@ const ResultsTable = ({ data = [], filters }) => {
     return columns;
   };
 
-  const flattenData = (data) =>
-    data.map((item) => {
-      const flatten = (obj, prefix = "") => {
-        let result = {};
-        for (const key in obj) {
-          if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            const fullKey = prefix ? `${prefix}.${key}` : key;
-            if (
-              obj[key] &&
-              typeof obj[key] === "object" &&
-              !Array.isArray(obj[key])
-            ) {
-              Object.assign(result, flatten(obj[key], fullKey));
-            } else {
-              result[fullKey.replace(/\./g, "")] =
-                obj[key] !== undefined ? obj[key] : "N/A";
-            }
+const flattenData = (data) =>
+  data.map((item) => {
+    const flatten = (obj, prefix = "") => {
+      let result = {};
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+          if (
+            obj[key] &&
+            typeof obj[key] === "object" &&
+            !Array.isArray(obj[key])
+          ) {
+            Object.assign(result, flatten(obj[key], fullKey));
+          } else {
+            result[fullKey] = obj[key] !== undefined ? obj[key] : "N/A";
           }
         }
-        return result;
-      };
-      return flatten(item);
-    });
+      }
+      return result;
+    };
+    return flatten(item);
+  });
 
   const handleEditClick = (row) => {
     setCurrentRow(row);
