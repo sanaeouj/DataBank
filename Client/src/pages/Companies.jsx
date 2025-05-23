@@ -1,175 +1,196 @@
-import React, { useState, useEffect } from "react";
+// Companies.jsx
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  TextField,
-  Button,
+  InputBase,
+  IconButton,
+  Paper,
   CssBaseline,
+  Container,
+  createTheme,
+  ThemeProvider,
+  alpha,
+  Link,
 } from "@mui/material";
-import FilterSidebar from "../components/FilterSidebar";
+import { DataGrid } from "@mui/x-data-grid";
+import { Search as SearchIcon, X as ClearIcon } from "lucide-react";
 import Sidebar from "../components/Sidebar";
-import ResultsTable from "../components/ResultsTable";
-import { useLocation } from "react-router-dom";
-import { createTheme, ThemeProvider, useTheme } from "@mui/material/styles";
-
-const API_BASE_URL = "https://databank-yndl.onrender.com";
+import axios from "axios";
+import CompanyDetails from "./CompanyDetails";
 
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: { main: "#60a5fa" },
     secondary: { main: "#a78bfa" },
-    error: { main: "#f87171" },
     background: { default: "#333", paper: "#1e1e1e" },
     text: { primary: "#f3f4f6", secondary: "#d1d5db" },
   },
-  shape: { borderRadius: 8 },
   typography: {
     fontFamily: ["Inter", "Segoe UI", "Roboto", "sans-serif"].join(","),
     button: { textTransform: "none" },
   },
 });
 
-const People = () => {
-  const location = useLocation();
-  const initialFilter = location.state?.filter || {};
-  const [filters, setFilters] = useState(initialFilter);
+const Companies = () => {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showTable, setShowTable] = useState(
-    Object.keys(initialFilter).length > 0
-  );
-  const [savedFilters, setSavedFilters] = useState(() => {
-    const stored = localStorage.getItem("savedFilters");
-    return stored ? JSON.parse(stored) : {};
-  });
-  const [filterName, setFilterName] = useState("");
-  const theme = useTheme();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState(null);
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/companies");
+      const companies = response.data;
+
+      const companyCount = {};
+      companies.forEach((company) => {
+        companyCount[company.company] =
+          (companyCount[company.company] || 0) + 1;
+      });
+
+      const uniqueCompanies = Object.keys(companyCount).map((companyName) => {
+        const firstOccurrence = companies.find(
+          (company) => company.company === companyName
+        );
+        return {
+          ...firstOccurrence,
+          count: companyCount[companyName],
+        };
+      });
+
+      setData(uniqueCompanies);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/ressources/all`
-        );
-        const result = await response.json();
-        setData(result);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchCompanies();
   }, []);
 
-  const applyFilters = (data) => {
-    return data.filter((item) => {
-      return Object.entries(filters).every(([key, value]) => {
-        if (!value) return true;
-        let itemValue = key.includes(".")
-          ? key.split(".").reduce((acc, part) => acc?.[part], item)
-          : item[key];
-        if (itemValue === undefined || itemValue === null) return false;
-        if (typeof itemValue === "object" && itemValue !== null) {
-          itemValue = Object.values(itemValue).join(" ");
-        }
-        const normalizedValueToMatch = String(itemValue).toLowerCase().trim();
-        const normalizedFilterValue = value.toLowerCase().trim();
-        return normalizedValueToMatch.includes(normalizedFilterValue);
-      });
-    });
-  };
+  const displayedColumns = [
+    { 
+      field: "company", 
+      headerName: "Company Name", 
+      width: 200, 
+      flex: 1,
+      renderCell: (params) => (
+        <Link
+          component="button"
+          onClick={() => setSelectedCompany(params.row)}
+          sx={{
+            color: "primary.main",
+            textDecoration: "none",
+            '&:hover': {
+              textDecoration: "underline",
+            },
+          }}
+        >
+          {params.value}
+        </Link>
+      )
+    },
+    { field: "industry", headerName: "Industry", width: 150 },
+    { field: "Phone", headerName: "Phone", width: 150 },
+    { field: "Email", headerName: "Email", width: 200 },
+    { field: "employees", headerName: "Employees", width: 100 },
+    { field: "count", headerName: "Count People", width: 150 },
+    {
+      field: "SEO Description",
+      headerName: "SEO Description",
+      width: 300,
+      flex: 1,
+    },
+  ];
 
-  const handleSaveFilter = () => {
-    if (!filterName.trim()) return;
-    const updated = { ...savedFilters, [filterName]: filters };
-    setSavedFilters(updated);
-    localStorage.setItem("savedFilters", JSON.stringify(updated));
-    setFilterName("");
-  };
-
-  const handleDeleteSavedFilter = (name) => {
-    const updated = { ...savedFilters };
-    delete updated[name];
-    setSavedFilters(updated);
-    localStorage.setItem("savedFilters", JSON.stringify(updated));
-  };
-
-  const filteredData = applyFilters(data);
+  const filteredData = data.filter((row) =>
+    row.company.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Box
-        sx={{ display: "flex", height: "90vh", bgcolor: "#333", flexDirection: { xs: 'column', md: 'row' } }}
-      >
+      <Box sx={{ display: "flex", minHeight: "100vh" }}>
         <Sidebar />
-        {loading ? (
-          <Typography variant="h6" sx={{ color: "white", p: 2 }}>
-            Loading filters...
-          </Typography>
-        ) : (
-          <FilterSidebar
-            filters={filters}
-            setFilters={(newFilters) => {
-              setFilters(newFilters);
-              setShowTable(true);
-            }}
-            data={data}
-          />
-        )}
-        <Box sx={{ flexGrow: 1, p: 2, bgcolor: "#333" }}>
-          <Typography variant="h5" sx={{ mb: 3, color: "white" }}>
-            People List
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <TextField
-              size="small"
-              variant="outlined"
-              placeholder="Enter filter name"
-              value={filterName}
-              onChange={(e) => setFilterName(e.target.value)}
-              sx={{
-                flexGrow: 0.1,
-                bgcolor: "white",
-                width: "150px",
-                fontSize: "0.8rem",
-                backgroundColor: "#333",
-                "& .MuiInputBase-input": {
-                  py: 0.5,
-                },
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleSaveFilter}
-              sx={{
-                flexShrink: 0,
-                color: "white",
-                fontSize: "0.8rem",
-                padding: "4px 8px",
-                marginBottom: "8px",
-                backgroundColor: "#333",
-                "&:hover": {
-                  backgroundColor: "black",
-                },
-              }}
-            >
-              Save
-            </Button>
-          </Box>
-          {showTable ? (
-            <ResultsTable data={filteredData} filters={filters} />
-          ) : (
-            <Typography variant="body1" sx={{ color: "gray" }}>
-              Please select a filter to display the table.
-            </Typography>
-          )}
+        <Box sx={{ flexGrow: 1, p: 3, bgcolor: "background.default" }}>
+          <Container maxWidth="lg">
+            {selectedCompany ? (
+              <CompanyDetails 
+                company={selectedCompany} 
+                onBack={() => setSelectedCompany(null)} 
+              />
+            ) : (
+              <>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    mb: 2,
+                    fontWeight: 700,
+                    background: `linear-gradient(45deg, ${darkTheme.palette.primary.main}, ${darkTheme.palette.secondary.main})`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  Company Data
+                </Typography>
+                <Paper
+                  sx={{
+                    p: 2,
+                    mb: 3,
+                    display: "flex",
+                    alignItems: "center",
+                    bgcolor: alpha(darkTheme.palette.common.white, 0.05),
+                  }}
+                >
+                  <SearchIcon size={20} color="#9ca3af" />
+                  <InputBase
+                    placeholder="Search companies..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{
+                      ml: 2,
+                      flex: 1,
+                      color: "text.primary",
+                      width: "100%",
+                    }}
+                    endAdornment={
+                      searchTerm && (
+                        <IconButton onClick={() => setSearchTerm("")}>
+                          <ClearIcon size={16} color="#9ca3af" />
+                        </IconButton>
+                      )
+                    }
+                  />
+                </Paper>
+                <Box sx={{ height: 600, width: "70vw" }}>
+                  <DataGrid
+                    rows={filteredData}
+                    columns={displayedColumns}
+                    pageSize={10}
+                    rowsPerPageOptions={[5, 10, 20]}
+                    getRowId={(row) => row.company}
+                    sx={{
+                      bgcolor: "background.paper",
+                      color: "text.primary",
+                      "& .MuiDataGrid-columnHeaders": {
+                        bgcolor: "background.default",
+                        color: "text.primary",
+                        fontWeight: "bold",
+                      },
+                      "& .MuiDataGrid-row:hover": {
+                        bgcolor: alpha(darkTheme.palette.primary.main, 0.1),
+                      },
+                    }}
+                  />
+                </Box>
+              </>
+            )}
+          </Container>
         </Box>
       </Box>
     </ThemeProvider>
   );
 };
 
-export default People;
+export default Companies;
