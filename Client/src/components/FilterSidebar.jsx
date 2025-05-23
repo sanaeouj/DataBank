@@ -30,59 +30,102 @@ const darkTheme = createTheme({
 });
 
 const FilterSidebar = ({ filters, setFilters, data }) => {
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFilters((prev) => ({
+const handleChange = (event) => {
+  const { name, value } = event.target;
+  setFilters((prev) => {
+    const newFilters = {
       ...prev,
       [name]: value,
-    }));
-  };
+    };
+    
+     if (name === "geo.country") {
+      delete newFilters["geo.state"];
+      delete newFilters["geo.city"];
+    } else if (name === "geo.state") {
+      delete newFilters["geo.city"];
+    }
+    
+    return newFilters;
+  });
+};
 
   const handleResetFilters = () => {
     setFilters({});
   };
+const getUniqueValues = (key, filter = {}) => {
+  if (!data || data.length === 0) return [];
+  
+  // Créer un objet de filtre simplifié qui ne contient que les dépendances nécessaires
+  const effectiveFilter = {};
+  if (filter) {
+    Object.keys(filter).forEach(filterKey => {
+      // Ne conserver que les filtres qui sont des dépendances directes
+      if (key.includes('geo.')) {
+        if (filterKey.includes('geo.')) {
+          effectiveFilter[filterKey] = filter[filterKey];
+        }
+      } else {
+        effectiveFilter[filterKey] = filter[filterKey];
+      }
+    });
+  }
 
-  const getUniqueValues = (key, filter = {}) => {
-    if (!data || data.length === 0) return [];
-    const values = data
-      .filter((item) =>
-        Object.keys(filter).every((filterKey) => {
-          const keys = filterKey.split(".");
-          const filterValue = keys.reduce((acc, part) => acc?.[part], item);
-          return filter[filterKey] ? filter[filterKey] === filterValue : true;
-        })
-      )
-      .map((item) => {
-        const keys = key.split(".");
-        return keys.reduce((acc, part) => acc?.[part], item);
-      })
-      .filter((value) => value !== undefined && value !== null);
-    return Array.from(new Set(values)).sort();
-  };
+  const values = data
+    .filter((item) => {
+      return Object.keys(effectiveFilter).every((filterKey) => {
+        if (!effectiveFilter[filterKey]) return true;
+        
+        const keys = filterKey.split(".");
+        const itemValue = keys.reduce((acc, part) => {
+          if (acc && typeof acc === 'object' && part in acc) {
+            return acc[part];
+          }
+          return undefined;
+        }, item);
+        
+        return itemValue === effectiveFilter[filterKey];
+      });
+    })
+    .map((item) => {
+      const keys = key.split(".");
+      return keys.reduce((acc, part) => {
+        if (acc && typeof acc === 'object' && part in acc) {
+          return acc[part];
+        }
+        return undefined;
+      }, item);
+    })
+    .filter((value) => value !== undefined && value !== null && value !== "");
+  
+  return Array.from(new Set(values)).sort();
+};
+const fields = [
+  ["Title", "title"],
+  ["Email Status", "EmailStatus"],
+  ["Industry", "company.industry"],
+  ["Seniority", "seniority"],
+  ["Departments", "departments"],
+  ["Company", "company.company"],
+  ["Country", "geo.country"],
+  ["State", "geo.state", { "geo.country": filters["geo.country"] }],
+  ["City", "geo.city", { 
+    "geo.country": filters["geo.country"],
+    "geo.state": filters["geo.state"] 
+  }],
+];
 
-  const fields = [
-    ["Title", "title"],
-    ["Email Status", "EmailStatus"],
-    ["Industry", "company.industry"],
-    ["Seniority", "seniority"],
-    ["Departments", "departments"],
-    ["Company", "company.company"],
-    ["Country", "geo.country"],
-    ["State", "geo.state", { "geo.country": filters["geo.country"] }],
-    ["City", "geo.city", {
-      "geo.country": filters["geo.country"],
-      "geo.state": filters["geo.state"],
-    }],
-  ];
-
-  const renderDropdown = (label, key, filter = {}) => {
+const renderDropdown = (label, key, filter = {}) => {
   const values = getUniqueValues(key, filter);
+  const isDisabled = Object.keys(filter).some(
+    filterKey => !filters[filterKey]
+  );
+
   return (
     <Box key={key} sx={{ mt: 2 }}>
       <Typography variant="body2" sx={{ 
-        color: "text.secondary", 
+        color: isDisabled ? "text.disabled" : "text.secondary", 
         mb: 1,
-         fontWeight: 500,
+        fontWeight: 500,
       }}>
         {label}
       </Typography>
@@ -92,6 +135,7 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
           value={filters[key] || ""}
           onChange={handleChange}
           displayEmpty
+          disabled={isDisabled}
           sx={{
             color: "text.primary",
             height: 40,
@@ -100,6 +144,10 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
             backgroundColor: alpha("#fff", 0.03),
             "&:hover": { backgroundColor: alpha("#fff", 0.05) },
             "& .MuiSelect-icon": { color: "text.secondary" },
+            "&.Mui-disabled": {
+              opacity: 0.7,
+              backgroundColor: alpha("#fff", 0.02),
+            },
           }}
           MenuProps={{
             PaperProps: {
@@ -112,10 +160,16 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
                 "& .Mui-selected": {
                   backgroundColor: alpha("#60a5fa", 0.15),
                 },
+                "& .Mui-disabled": {
+                  opacity: 0.5,
+                },
               },
             },
           }}
         >
+          <MenuItem value="" disabled>
+            Select {label}
+          </MenuItem>
           {values.map((value, index) => (
             <MenuItem key={index} value={value}>
               {typeof value === "string" ? value : JSON.stringify(value)}
@@ -126,7 +180,6 @@ const FilterSidebar = ({ filters, setFilters, data }) => {
     </Box>
   );
 };
-
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
