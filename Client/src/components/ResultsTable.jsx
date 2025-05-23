@@ -21,8 +21,6 @@ import EditDialog from "./EditDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-const ResultsTable = ({ data = [], filters }) => {
-  // Place headerMapping ici, AVANT toute fonction qui l'utilise
   const headerMapping = {
     "First Name": "First Name",
     "Last Name": "Last Name",
@@ -46,6 +44,8 @@ const ResultsTable = ({ data = [], filters }) => {
     "revenue_Latest Funding Amount": "Latest Funding Amount",
     "revenue_Latest Funding": "Latest Funding Date",
   };
+const ResultsTable = ({ data = [], filters }) => {
+ 
 
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({});
@@ -68,8 +68,7 @@ const ResultsTable = ({ data = [], filters }) => {
     socialDetails: {},
   });
 
-  // Les colonnes à masquer (tous les ID)
-  const hiddenColumns = [
+   const hiddenColumns = [
     "personalid",
     "companycompanyid",
     "companypersonalid",
@@ -81,8 +80,7 @@ const ResultsTable = ({ data = [], filters }) => {
     "socialsocialid",
   ];
 
-  // Aplatir tous les objets et sous-objets pour que chaque attribut soit une colonne
-  const flattenData = (data) =>
+   const flattenData = (data) =>
   data.map((item) => {
     const flatten = (obj, prefix = "") => {
       let result = {};
@@ -105,8 +103,7 @@ const ResultsTable = ({ data = [], filters }) => {
     return flatten(item);
   });
 
-  // Générer dynamiquement toutes les colonnes à partir des données aplanies
-  const getColumnsFromData = (data) => {
+   const getColumnsFromData = (data) => {
     if (!data || !data.length) return [];
     const columns = [];
 
@@ -349,8 +346,7 @@ setFilteredData(updatedData);
     const headers = Object.keys(filteredData[0]).filter(
       (key) => !hiddenColumns.includes(key)
     );
-    // Utiliser le headerMapping pour les noms de colonnes affichés
-    const headerRow = headers.map((key) => headerMapping[key] || key);
+     const headerRow = headers.map((key) => headerMapping[key] || key);
     const csvContent = [
       headerRow.join(","),
       ...filteredData.map((row) =>
@@ -383,8 +379,7 @@ setFilteredData(updatedData);
     const headers = Object.keys(filteredData[0]).filter(
       (key) => !hiddenColumns.includes(key)
     );
-    // Générer les données avec les bons noms de colonnes
-    const filteredExportData = filteredData.map((row) => {
+     const filteredExportData = filteredData.map((row) => {
       const newRow = {};
       headers.forEach((key) => {
         newRow[headerMapping[key] || key] = row[key];
