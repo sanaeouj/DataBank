@@ -52,7 +52,7 @@ const UpdateUser = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/ressources/all");
+      const response = await axios.get("https://databank-yndl.onrender.com/api/ressources/all");
       if (Array.isArray(response.data) && response.data.length) {
         const flattenedData = response.data.map(flattenObject).map((item) => {
           if (item["Latest Funding"]) {
@@ -166,7 +166,7 @@ const handleSaveEdit = async () => {
     };
 
     const response = await axios.put(
-      `http://localhost:3000/api/ressources/${originalData["personalid"]}`,
+      `https://databank-f.onrender.com/api/ressources/${originalData["personalid"]}`,
       updateData,
       {
         headers: {
@@ -205,7 +205,7 @@ const handleSaveEdit = async () => {
 
     try {
       await axios.delete(
-        `http://localhost:3000/api/ressources/delete/${row["personalid"]}`
+        `https://databank-yndl.onrender.com/api/ressources/delete/${row["personalid"]}`
       );
       fetchData();
       showSnackbar("Suppression effectuée avec succès!");
