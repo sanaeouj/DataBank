@@ -11,9 +11,7 @@ import Sidebar from "../components/Sidebar";
 import ResultsTable from "../components/ResultsTable";
 import { useLocation } from "react-router-dom";
 import { createTheme, ThemeProvider, useTheme } from "@mui/material/styles";
-
-const API_BASE_URL = "https://databank-yndl.onrender.com";
-
+ 
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
@@ -50,7 +48,7 @@ const People = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `https://databank-yndl.onrender.com/api/ressources/all`
+          "https://databank-yndl.onrender.com/api/ressources/all"
         );
         const result = await response.json();
         setData(result);
@@ -136,6 +134,7 @@ const People = () => {
                 width: "150px",
                 fontSize: "0.8rem",
                 backgroundColor: "#333",
+
                 "& .MuiInputBase-input": {
                   py: 0.5,
                 },
@@ -166,7 +165,9 @@ const People = () => {
               Please select a filter to display the table.
             </Typography>
           )}
-        </Box>
+
+        
+            </Box>
       </Box>
     </ThemeProvider>
   );

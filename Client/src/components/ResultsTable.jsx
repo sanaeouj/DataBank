@@ -20,9 +20,6 @@ import CustomToolbar from "./CustomToolbar";
 import EditDialog from "./EditDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-const API_BASE_URL = "https://databank-yndl.onrender.com";
-
 const headerMapping = {
   "First Name": "First Name",
   "Last Name": "Last Name",
@@ -50,7 +47,6 @@ const headerMapping = {
   "socialFacebook Url": "Facebook",
   "socialTwitter Url": "Twitter",
 };
-
 const ResultsTable = ({ data = [], filters }) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({});
@@ -72,7 +68,7 @@ const ResultsTable = ({ data = [], filters }) => {
     revenueDetails: {},
     socialDetails: {},
   });
-
+  
   const hiddenColumns = [
     "personalid",
     "companycompanyid",
@@ -242,7 +238,7 @@ const ResultsTable = ({ data = [], filters }) => {
         twitterUrl: row['socialTwitter Url'] || '',
       },
     };
-    setEditFormData(formData);
+     setEditFormData(formData);
     setEditDialogOpen(true);
   };
 
@@ -292,7 +288,7 @@ const ResultsTable = ({ data = [], filters }) => {
           twitterUrl: editFormData.socialDetails.twitterUrl || '',
         }
       };
-      const response = await axios.put(
+       const response = await axios.put(
         `https://databank-yndl.onrender.com/api/ressources/update/${currentRow.personalid}`,
         updateData,
         {
@@ -301,7 +297,7 @@ const ResultsTable = ({ data = [], filters }) => {
           },
         }
       );
-
+   
       const updatedData = filteredData.map((row) => {
         if (row.personalid === currentRow.personalid) {
           return {
@@ -314,18 +310,22 @@ const ResultsTable = ({ data = [], filters }) => {
             mobilePhone: updateData.personalDetails.mobilePhone,
             email: updateData.personalDetails.email,
             EmailStatus: updateData.personalDetails.EmailStatus,
+            
             companycompany: updateData.companyDetails.company,
             companyEmail: updateData.companyDetails.email,
             companyPhone: updateData.companyDetails.phone,
             companyemployees: updateData.companyDetails.employees,
             companyindustry: updateData.companyDetails.industry,
             'companySEO Description': updateData.companyDetails.seoDescription,
+            
             geoaddress: updateData.geoDetails.address,
             geocity: updateData.geoDetails.city,
             geostate: updateData.geoDetails.state,
             geocountry: updateData.geoDetails.country,
+            
             'revenueLatest Funding': updateData.revenueDetails.latestFunding,
             'revenueLatest Funding Amount': updateData.revenueDetails.latestFundingAmount,
+            
             'socialCompany Linkedin Url': updateData.socialDetails.linkedinUrl,
             'socialFacebook Url': updateData.socialDetails.facebookUrl,
             'socialTwitter Url': updateData.socialDetails.twitterUrl,
@@ -333,7 +333,8 @@ const ResultsTable = ({ data = [], filters }) => {
         }
         return row;
       });
-      await axios.get(`https://databank-yndl.onrender.com/api/ressources`);
+          const refreshedData = await axios.get('https://databank-yndl.onrender.com/api/ressources');
+
       setFilteredData(updatedData);
       setEditDialogOpen(false);
       setSnackbar({
@@ -343,15 +344,20 @@ const ResultsTable = ({ data = [], filters }) => {
       });
     } catch (error) {
       console.error("Erreur lors de la mise à jour:", error);
+      
       let errorMessage = "Échec de la mise à jour";
       if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        
         if (error.response.data && error.response.data.error) {
           errorMessage = error.response.data.error;
         }
       } else if (error.request) {
+        console.error("Request:", error.request);
         errorMessage = "Pas de réponse du serveur";
       } else {
-        errorMessage = error.message;
+        console.error("Error message:", error.message);
       }
       setSnackbar({
         open: true,
@@ -374,6 +380,7 @@ const ResultsTable = ({ data = [], filters }) => {
         severity: "success",
       });
     } catch (error) {
+      console.error("Error deleting row:", error);
       setSnackbar({
         open: true,
         message: "Failed to delete row.",
@@ -383,57 +390,59 @@ const ResultsTable = ({ data = [], filters }) => {
   };
 
   const exportToCSV = () => {
-    if (!filteredData.length) {
-      alert("No data to export.");
-      return;
-    }
-    const headers = Object.keys(filteredData[0]).filter(
-      (key) => !hiddenColumns.includes(key)
-    );
-    const csvContent = [
-      headers.map((key) => headerMapping[key] || key).join(","),
-      ...filteredData.map((row) =>
-        headers
-          .map((header) => {
-            const cellData = (row[header] || "").toString().replace(/"/g, '""');
-            return `"${cellData}"`;
-          })
-          .join(",")
-      ),
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    if (navigator.msSaveBlob) {
-      navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
-    } else {
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", "ResultsTable_Export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
+  if (!filteredData.length) {
+    alert("No data to export.");
+    return;
+  }
+  const headers = Object.keys(filteredData[0]).filter(
+    (key) => !hiddenColumns.includes(key)
+  );
+  // Utilise les labels du headerMapping pour la première ligne
+  const csvContent = [
+    headers.map((key) => headerMapping[key] || key).join(","),
+    ...filteredData.map((row) =>
+      headers
+        .map((header) => {
+          const cellData = (row[header] || "").toString().replace(/"/g, '""');
+          return `"${cellData}"`;
+        })
+        .join(",")
+    ),
+  ].join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  if (navigator.msSaveBlob) {
+    navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
+  } else {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "ResultsTable_Export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
 
   const exportToExcel = () => {
-    if (!filteredData.length) {
-      alert("No data to export.");
-      return;
-    }
-    const headers = Object.keys(filteredData[0]).filter(
-      (key) => !hiddenColumns.includes(key)
-    );
-    const filteredExportData = filteredData.map((row) => {
-      const newRow = {};
-      headers.forEach((key) => {
-        newRow[headerMapping[key] || key] = row[key];
-      });
-      return newRow;
+  if (!filteredData.length) {
+    alert("No data to export.");
+    return;
+  }
+  const headers = Object.keys(filteredData[0]).filter(
+    (key) => !hiddenColumns.includes(key)
+  );
+  // Remplace les clés par les labels dans chaque ligne
+  const filteredExportData = filteredData.map((row) => {
+    const newRow = {};
+    headers.forEach((key) => {
+      newRow[headerMapping[key] || key] = row[key];
     });
-    const worksheet = XLSX.utils.json_to_sheet(filteredExportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-    XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
-  };
+    return newRow;
+  });
+  const worksheet = XLSX.utils.json_to_sheet(filteredExportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+  XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
+};
 
   const SettingsDialog = () => (
     <Dialog
