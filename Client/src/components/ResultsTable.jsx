@@ -21,32 +21,32 @@ import EditDialog from "./EditDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-  const headerMapping = {
-    "First Name": "First Name",
-    "Last Name": "Last Name",
-    "mobilePhone": "Mobile Phone",
-    "EmailStatus": "Email Status",
-    "company_company": "Company",
-    "company_Email": "Company Email",
-    "company_Phone": "Company Phone",
-    "company_employees": "Employees",
-    "company_industry": "Industry",
-    "company_SEO Description": "SEO Description",
-    "geo_address": "Address",
-    "geo_city": "City",
-    "geo_state": "State/Region",
-    "geo_country": "Country",
-    "social_Company Linkedin Url": "LinkedIn",
-    "social_Facebook Url": "Facebook",
-    "social_Twitter Url": "Twitter",
-    "revenue_Annual Revenue": "Annual Revenue",
-    "revenue_Total Funding": "Total Funding",
-    "revenue_Latest Funding Amount": "Latest Funding Amount",
-    "revenue_Latest Funding": "Latest Funding Date",
-  };
-const ResultsTable = ({ data = [], filters }) => {
- 
+// Place headerMapping ici, hors du composant
+const headerMapping = {
+  "First Name": "First Name",
+  "Last Name": "Last Name",
+  "mobilePhone": "Mobile Phone",
+  "EmailStatus": "Email Status",
+  "company_company": "Company",
+  "company_Email": "Company Email",
+  "company_Phone": "Company Phone",
+  "company_employees": "Employees",
+  "company_industry": "Industry",
+  "company_SEO Description": "SEO Description",
+  "geo_address": "Address",
+  "geo_city": "City",
+  "geo_state": "State/Region",
+  "geo_country": "Country",
+  "social_Company Linkedin Url": "LinkedIn",
+  "social_Facebook Url": "Facebook",
+  "social_Twitter Url": "Twitter",
+  "revenue_Annual Revenue": "Annual Revenue",
+  "revenue_Total Funding": "Total Funding",
+  "revenue_Latest Funding Amount": "Latest Funding Amount",
+  "revenue_Latest Funding": "Latest Funding Date",
+};
 
+const ResultsTable = ({ data = [], filters }) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({});
   const [savedFilters, setSavedFilters] = useState({});
@@ -68,7 +68,7 @@ const ResultsTable = ({ data = [], filters }) => {
     socialDetails: {},
   });
 
-   const hiddenColumns = [
+  const hiddenColumns = [
     "personalid",
     "companycompanyid",
     "companypersonalid",
@@ -80,41 +80,46 @@ const ResultsTable = ({ data = [], filters }) => {
     "socialsocialid",
   ];
 
-   const flattenData = (data) =>
-  data.map((item) => {
-    const flatten = (obj, prefix = "") => {
-      let result = {};
-      for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          const fullKey = prefix ? `${prefix}_${key}` : key;
-          if (
-            obj[key] &&
-            typeof obj[key] === "object" &&
-            !Array.isArray(obj[key])
-          ) {
-            Object.assign(result, flatten(obj[key], fullKey));
-          } else {
-             result[fullKey] = obj[key] !== null && obj[key] !== undefined ? obj[key] : "";
+  const flattenData = (data) =>
+    data.map((item) => {
+      const flatten = (obj, prefix = "") => {
+        let result = {};
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const fullKey = prefix ? `${prefix}_${key}` : key;
+            if (
+              obj[key] &&
+              typeof obj[key] === "object" &&
+              !Array.isArray(obj[key])
+            ) {
+              Object.assign(result, flatten(obj[key], fullKey));
+            } else {
+              result[fullKey] = obj[key] !== null && obj[key] !== undefined ? obj[key] : "";
+            }
           }
         }
-      }
-      return result;
-    };
-    return flatten(item);
-  });
+        return result;
+      };
+      return flatten(item);
+    });
 
-   const getColumnsFromData = (data) => {
+  const getColumnsFromData = (data) => {
     if (!data || !data.length) return [];
     const columns = [];
 
-
     const sampleItem = flattenData([data[0]])[0];
     for (const key in sampleItem) {
-      if (!hiddenColumns.some(hc => key.includes(hc))) {
+      if (!hiddenColumns.some((hc) => key.includes(hc))) {
         columns.push({
           field: key,
-          headerName: headerMapping[key] ||
-            key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          headerName:
+            headerMapping[key] ||
+            key
+              .split("_")
+              .map(
+                (word) => word.charAt(0).toUpperCase() + word.slice(1)
+              )
+              .join(" "),
           width: 200,
           renderCell: (params) => {
             if (key === "revenue_Latest Funding") {
@@ -134,10 +139,12 @@ const ResultsTable = ({ data = [], filters }) => {
                 >
                   Lien
                 </a>
-              ) : "";
+              ) : (
+                ""
+              );
             }
             return params.value || "";
-          }
+          },
         });
       }
     }
@@ -166,8 +173,8 @@ const ResultsTable = ({ data = [], filters }) => {
     setCurrentRow(row);
     const formData = {
       personalDetails: {
-        firstName: row['First Name'] || '',
-        lastName: row['Last Name'] || '', 
+        firstName: row["First Name"] || "",
+        lastName: row["Last Name"] || "",
         title: row.title || "",
         seniority: row.seniority || "",
         departments: row.departments || "",
@@ -179,9 +186,11 @@ const ResultsTable = ({ data = [], filters }) => {
         company: row.companycompany || "",
         email: row.companyEmail || "",
         phone: row.companyPhone || "",
-        employees: row.companyemployees ? row.companyemployees.toString() : "",
+        employees: row.companyemployees
+          ? row.companyemployees.toString()
+          : "",
         industry: row.companyindustry || "",
-        seoDescription: row['companySEO Description'] || "",  
+        seoDescription: row["companySEO Description"] || "",
       },
       geoDetails: {
         address: row.geoaddress || "",
@@ -190,13 +199,17 @@ const ResultsTable = ({ data = [], filters }) => {
         country: row.geocountry || "",
       },
       revenueDetails: {
-        latestFunding: row['revenueLatest Funding'] ? formatDateForInput(row['revenueLatest Funding']) : "",
-        latestFundingAmount: row['revenueLatest Funding Amount'] ? row['revenueLatest Funding Amount'].toString() : "", 
+        latestFunding: row["revenueLatest Funding"]
+          ? formatDateForInput(row["revenueLatest Funding"])
+          : "",
+        latestFundingAmount: row["revenueLatest Funding Amount"]
+          ? row["revenueLatest Funding Amount"].toString()
+          : "",
       },
       socialDetails: {
-        linkedinUrl: row['socialCompany Linkedin Url'] || '',
-        facebookUrl: row['socialFacebook Url'] || '',
-        twitterUrl: row['socialTwitter Url'] || '',
+        linkedinUrl: row["socialCompany Linkedin Url"] || "",
+        facebookUrl: row["socialFacebook Url"] || "",
+        twitterUrl: row["socialTwitter Url"] || "",
       },
     };
     setEditFormData(formData);
@@ -206,7 +219,7 @@ const ResultsTable = ({ data = [], filters }) => {
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toISOString().split('T')[0];  
+    return date.toISOString().split("T")[0];
   };
 
   const handleUpdateRow = async () => {
@@ -216,80 +229,81 @@ const ResultsTable = ({ data = [], filters }) => {
       }
       const updateData = {
         personalDetails: {
-          firstName: editFormData.personalDetails.firstName || '',
-          lastName: editFormData.personalDetails.lastName || '',
-          title: editFormData.personalDetails.title || '',
-          seniority: editFormData.personalDetails.seniority || '',
-          departments: editFormData.personalDetails.departments || '',
-          mobilePhone: editFormData.personalDetails.mobilePhone || '',
-          email: editFormData.personalDetails.email || '',
-          EmailStatus: editFormData.personalDetails.EmailStatus || '',
+          firstName: editFormData.personalDetails.firstName || "",
+          lastName: editFormData.personalDetails.lastName || "",
+          title: editFormData.personalDetails.title || "",
+          seniority: editFormData.personalDetails.seniority || "",
+          departments: editFormData.personalDetails.departments || "",
+          mobilePhone: editFormData.personalDetails.mobilePhone || "",
+          email: editFormData.personalDetails.email || "",
+          EmailStatus: editFormData.personalDetails.EmailStatus || "",
         },
         companyDetails: {
-          company: editFormData.companyDetails.company || '',
-          email: editFormData.companyDetails.email || '',
-          phone: editFormData.companyDetails.phone || '',
-          employees: editFormData.companyDetails.employees || '',
-          industry: editFormData.companyDetails.industry || '',
-          seoDescription: editFormData.companyDetails.seoDescription || '',
+          company: editFormData.companyDetails.company || "",
+          email: editFormData.companyDetails.email || "",
+          phone: editFormData.companyDetails.phone || "",
+          employees: editFormData.companyDetails.employees || "",
+          industry: editFormData.companyDetails.industry || "",
+          seoDescription: editFormData.companyDetails.seoDescription || "",
         },
         geoDetails: {
-          address: editFormData.geoDetails.address || '',
-          city: editFormData.geoDetails.city || '',
-          state: editFormData.geoDetails.state || '',
-          country: editFormData.geoDetails.country || '',
+          address: editFormData.geoDetails.address || "",
+          city: editFormData.geoDetails.city || "",
+          state: editFormData.geoDetails.state || "",
+          country: editFormData.geoDetails.country || "",
         },
         revenueDetails: {
           latestFunding: editFormData.revenueDetails.latestFunding || null,
-          latestFundingAmount: editFormData.revenueDetails.latestFundingAmount || '',
+          latestFundingAmount: editFormData.revenueDetails.latestFundingAmount || "",
         },
         socialDetails: {
-          linkedinUrl: editFormData.socialDetails.linkedinUrl || '',
-          facebookUrl: editFormData.socialDetails.facebookUrl || '',
-          twitterUrl: editFormData.socialDetails.twitterUrl || '',
-        }
+          linkedinUrl: editFormData.socialDetails.linkedinUrl || "",
+          facebookUrl: editFormData.socialDetails.facebookUrl || "",
+          twitterUrl: editFormData.socialDetails.twitterUrl || "",
+        },
       };
       await axios.put(
         `https://databank-yndl.onrender.com/api/ressources/update/${currentRow.personalid}`,
         updateData,
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
-     const updatedData = filteredData.map((row) => {
-  if (row.personalid === currentRow.personalid) {
-    return {
-      ...row,
-       'First Name': updateData.personalDetails.firstName,
-      'Last Name': updateData.personalDetails.lastName,
-      title: updateData.personalDetails.title,
-      seniority: updateData.personalDetails.seniority,
-      departments: updateData.personalDetails.departments,
-      mobilePhone: updateData.personalDetails.mobilePhone,
-      email: updateData.personalDetails.email,
-      EmailStatus: updateData.personalDetails.EmailStatus,
-       company_company: updateData.companyDetails.company,
-      company_Email: updateData.companyDetails.email,
-      company_Phone: updateData.companyDetails.phone,
-      company_employees: updateData.companyDetails.employees,
-      company_industry: updateData.companyDetails.industry,
-      'company_SEO Description': updateData.companyDetails.seoDescription,
-       geo_address: updateData.geoDetails.address,
-      geo_city: updateData.geoDetails.city,
-      geo_state: updateData.geoDetails.state,
-      geo_country: updateData.geoDetails.country,
-       'revenue_Latest Funding': updateData.revenueDetails.latestFunding,
-      'revenue_Latest Funding Amount': updateData.revenueDetails.latestFundingAmount,
-       'social_Company Linkedin Url': updateData.socialDetails.linkedinUrl,
-      'social_Facebook Url': updateData.socialDetails.facebookUrl,
-      'social_Twitter Url': updateData.socialDetails.twitterUrl,
-    };
-  }
-  return row;
-});
-setFilteredData(updatedData);
+      const updatedData = filteredData.map((row) => {
+        if (row.personalid === currentRow.personalid) {
+          return {
+            ...row,
+            "First Name": updateData.personalDetails.firstName,
+            "Last Name": updateData.personalDetails.lastName,
+            title: updateData.personalDetails.title,
+            seniority: updateData.personalDetails.seniority,
+            departments: updateData.personalDetails.departments,
+            mobilePhone: updateData.personalDetails.mobilePhone,
+            email: updateData.personalDetails.email,
+            EmailStatus: updateData.personalDetails.EmailStatus,
+            company_company: updateData.companyDetails.company,
+            company_Email: updateData.companyDetails.email,
+            company_Phone: updateData.companyDetails.phone,
+            company_employees: updateData.companyDetails.employees,
+            company_industry: updateData.companyDetails.industry,
+            "company_SEO Description": updateData.companyDetails.seoDescription,
+            geo_address: updateData.geoDetails.address,
+            geo_city: updateData.geoDetails.city,
+            geo_state: updateData.geoDetails.state,
+            geo_country: updateData.geoDetails.country,
+            "revenue_Latest Funding": updateData.revenueDetails.latestFunding,
+            "revenue_Latest Funding Amount":
+              updateData.revenueDetails.latestFundingAmount,
+            "social_Company Linkedin Url": updateData.socialDetails.linkedinUrl,
+            "social_Facebook Url": updateData.socialDetails.facebookUrl,
+            "social_Twitter Url": updateData.socialDetails.twitterUrl,
+          };
+        }
+        return row;
+      });
+      setFilteredData(updatedData);
       setFilteredData(updatedData);
       setEditDialogOpen(false);
       setSnackbar({
@@ -322,8 +336,12 @@ setFilteredData(updatedData);
       return;
     }
     try {
-      await axios.delete(`https://databank-yndl.onrender.com/api/ressources/delete/${row.personalid}`);
-      setFilteredData((prev) => prev.filter((item) => item.personalid !== row.personalid));
+      await axios.delete(
+        `https://databank-yndl.onrender.com/api/ressources/delete/${row.personalid}`
+      );
+      setFilteredData((prev) =>
+        prev.filter((item) => item.personalid !== row.personalid)
+      );
       setSnackbar({
         open: true,
         message: "Row deleted successfully!",
@@ -346,7 +364,7 @@ setFilteredData(updatedData);
     const headers = Object.keys(filteredData[0]).filter(
       (key) => !hiddenColumns.includes(key)
     );
-     const headerRow = headers.map((key) => headerMapping[key] || key);
+    const headerRow = headers.map((key) => headerMapping[key] || key);
     const csvContent = [
       headerRow.join(","),
       ...filteredData.map((row) =>
@@ -379,7 +397,7 @@ setFilteredData(updatedData);
     const headers = Object.keys(filteredData[0]).filter(
       (key) => !hiddenColumns.includes(key)
     );
-     const filteredExportData = filteredData.map((row) => {
+    const filteredExportData = filteredData.map((row) => {
       const newRow = {};
       headers.forEach((key) => {
         newRow[headerMapping[key] || key] = row[key];
@@ -477,13 +495,13 @@ setFilteredData(updatedData);
   return (
     <div
       style={{
-        height: "90vh", 
+        height: "90vh",
         overflowX: "auto",
         backgroundColor: "#333",
         color: "white",
       }}
     >
-      <CustomToolbar 
+      <CustomToolbar
         exportToCSV={exportToCSV}
         exportToExcel={exportToExcel}
         setSettingsDialogOpen={setSettingsDialogOpen}
@@ -550,7 +568,10 @@ setFilteredData(updatedData);
           backgroundColor: "#333",
           color: "white",
           width: `${Math.max(
-            displayedColumns.reduce((total, col) => total + (col.width || 200), 0),
+            displayedColumns.reduce(
+              (total, col) => total + (col.width || 200),
+              0
+            ),
             window.innerWidth
           )}px`,
           "& .MuiDataGrid-columnHeaders": {
