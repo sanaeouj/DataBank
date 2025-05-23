@@ -121,7 +121,7 @@ app.post('/api/clients', async (req, res) => {
     } = req.body;
 
     // Required Fields Validation
-    if (!firstName || !lastName || !email || !company || !geo || !companyRevenue) {
+    if (!firstName || !lastName  || !company || !geo || !companyRevenue) {
       return res.status(400).json({ error: "Les champs requis sont manquants." });
     }
     
