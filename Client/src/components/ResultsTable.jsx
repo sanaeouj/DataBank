@@ -70,7 +70,7 @@ const ResultsTable = ({ data = [], filters }) => {
     revenueDetails: {},
     socialDetails: {},
   });
-
+  
   const hiddenColumns = [
     "personalid",
     "companycompanyid",
@@ -83,94 +83,10 @@ const ResultsTable = ({ data = [], filters }) => {
     "socialsocialid",
   ];
 
-  const flattenData = (data) => {
-    return data.map(item => {
-      const flattenObject = (obj, prefix = '') => {
-        return Object.keys(obj).reduce((acc, key) => {
-          const fullKey = prefix ? `${prefix}.${key}` : key;
-          
-          if (Array.isArray(obj[key])) {
-            return {
-              ...acc,
-              [fullKey.replace(/\./g, "")]: obj[key].join(', ')
-            };
-          }
-          
-          if (typeof obj[key] === 'object' && obj[key] !== null) {
-            return {
-              ...acc,
-              ...flattenObject(obj[key], fullKey)
-            };
-          }
-          
-          return {
-            ...acc,
-            [fullKey.replace(/\./g, "")]: obj[key] !== undefined ? obj[key] : "N/A"
-          };
-        }, {});
-      };
-      
-      return flattenObject(item);
-    });
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("fr-FR");
-  };
-
-  const getColumnsFromData = (data) => {
-    if (!data || !data.length) return [];
-    
-    const sampleItem = flattenData([data[0]])[0];
-    const allKeys = Object.keys(sampleItem).filter(key => !hiddenColumns.includes(key));
-    
-    return allKeys.map(key => ({
-      field: key,
-      headerName: headerMapping[key] || 
-        key.split(/(?=[A-Z])/).join(' ')
-          .replace(/(^\w|\s\w)/g, m => m.toUpperCase()),
-      width: 200,
-      renderCell: (params) => {
-        if (params.value === undefined || params.value === null) return "N/A";
-        
-        if (key.includes('Funding') && !isNaN(new Date(params.value).getTime())) {
-          return formatDate(params.value);
-        }
-        
-        if (/Url$/i.test(key) && params.value) {
-          return (
-            <a
-              href={params.value.startsWith('http') ? params.value : `https://${params.value}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#90caf9' }}
-            >
-              Link
-            </a>
-          );
-        }
-        
-        return params.value.toString();
-      }
-    }));
-  };
-
-  useEffect(() => {
-    if (data.length > 0) {
-      const columns = getColumnsFromData(data);
-      setVisibleColumns(columns.map(col => ({
-        field: col.field,
-        visible: true
-      })));
-    }
-  }, [data]);
-
   useEffect(() => {
     const applyFilters = () => {
       if (!data || !data.length) return [];
-      const flattened = flattenData(data);
-      return flattened.filter((row) => {
+      return flattenData(data).filter((row) => {
         return Object.entries(filterValues).every(([key, value]) => {
           if (!value) return true;
           const cellValue = row[key]?.toString().toLowerCase() || "";
@@ -181,11 +97,116 @@ const ResultsTable = ({ data = [], filters }) => {
     setFilteredData(applyFilters());
   }, [data, filterValues]);
 
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("fr-FR");
   };
+
+  const getColumnsFromData = (data) => {
+    if (!data || !data.length) return [];
+    const columns = [];
+    const headerMapping = {
+      mobilePhone: "Mobile Phone",
+      EmailStatus: "Email Status",
+      "company.company": "Company",
+      "company.email": "Company Email",
+      "company.phone": "Company Phone",
+      "company.employees": "Company Employees",
+      "company.industry": "Industry",
+      "company.SEO Description": "SEO Description",
+      "company.Annual Revenue": "Annual Revenue",
+      "company.Total Funding": "Total Funding",
+      "geo.address": "Address",
+      "geo.city": "City",
+      "geo.state": "State",
+      "geo.country": "Country",
+      "social.Company Linkedin Url": "LinkedIn",
+      "social.Facebook Url": "Facebook",
+      "social.Twitter Url": "Twitter",
+      "revenue.Total Funding": "Total Funding",
+      "revenue.Annual Revenue": "Annual Revenue",
+      "revenue.Latest Funding Amount": "Latest Funding Amount",
+      "revenue.Latest Funding": "Latest Funding",
+    };
+
+    const extractFields = (obj, prefix = "") => {
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+          if (!hiddenColumns.includes(fullKey.replace(/\./g, ""))) {
+            if (
+              typeof obj[key] === "object" &&
+              obj[key] !== null &&
+              !Array.isArray(obj[key])
+            ) {
+              extractFields(obj[key], fullKey);
+            } else {
+              columns.push({
+                field: fullKey.replace(/\./g, ""),
+                headerName:
+                  headerMapping[fullKey] ||
+                  fullKey
+                    .split(".")
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" "),
+                width: 200,
+                renderCell: (params) => {
+                  if (params.value === undefined || params.value === null) return "N/A";
+                  
+                  if (fullKey === "revenue.Latest Funding") {
+                    return formatDate(params.value);
+                  } else if (/Url$/i.test(fullKey)) {
+                    return params.value ? (
+                      <a
+                        href={
+                          params.value.startsWith("http://") ||
+                          params.value.startsWith("https://")
+                            ? params.value
+                            : `http://${params.value}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#90caf9" }}
+                      >
+                        Link
+                      </a>
+                    ) : "N/A";
+                  }
+                  return params.value || "N/A";
+                },
+              });
+            }
+          }
+        }
+      }
+    };
+    extractFields(data[0]);
+    return columns;
+  };
+
+  const flattenData = (data) =>
+    data.map((item) => {
+      const flatten = (obj, prefix = "") => {
+        let result = {};
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const fullKey = prefix ? `${prefix}.${key}` : key;
+            if (
+              obj[key] &&
+              typeof obj[key] === "object" &&
+              !Array.isArray(obj[key])
+            ) {
+              Object.assign(result, flatten(obj[key], fullKey));
+            } else {
+              result[fullKey.replace(/\./g, "")] =
+                obj[key] !== undefined ? obj[key] : "N/A";
+            }
+          }
+        }
+        return result;
+      };
+      return flatten(item);
+    });
 
   const handleEditClick = (row) => {
     setCurrentRow(row);
@@ -226,6 +247,12 @@ const ResultsTable = ({ data = [], filters }) => {
     };
     setEditFormData(formData);
     setEditDialogOpen(true);
+  };
+
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];  
   };
 
   const handleUpdateRow = async () => {
@@ -327,11 +354,17 @@ const ResultsTable = ({ data = [], filters }) => {
       
       let errorMessage = "Échec de la mise à jour";
       if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        
         if (error.response.data && error.response.data.error) {
           errorMessage = error.response.data.error;
         }
       } else if (error.request) {
+        console.error("Request:", error.request);
         errorMessage = "Pas de réponse du serveur";
+      } else {
+        console.error("Error message:", error.message);
       }
       
       setSnackbar({
@@ -384,12 +417,16 @@ const ResultsTable = ({ data = [], filters }) => {
       ),
     ].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", "ResultsTable_Export.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (navigator.msSaveBlob) {
+      navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
+    } else {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", "ResultsTable_Export.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const exportToExcel = () => {
