@@ -67,6 +67,9 @@ app.get('/api/companies', async (req, res) => {
 });
 
 // Récupérer toutes les ressources combinées
+// ...autres routes...
+
+// Récupérer toutes les ressources combinées
 app.get('/api/ressources/all', async (req, res) => {
   try {
     const personalDetails = await pool.query('SELECT * FROM personaldetails');
@@ -83,15 +86,56 @@ app.get('/api/ressources/all', async (req, res) => {
 
       return {
         ...personal,
-        company: company ? { ...company } : {},
+        company: company ? { 
+          companyid: company.companyid,
+          company: company.company || "",
+          Email: company.Email || "",
+          Phone: company.Phone || "",
+          employees: company.employees || null,
+          industry: company.industry || "",
+          "SEO Description": company["SEO Description"] || "",
+          personalid: company.personalid
+        } : {
+          companyid: null,
+          company: "",
+          Email: "",
+          Phone: "",
+          employees: null,
+          industry: "",
+          "SEO Description": "",
+          personalid: personal.personalid
+        },
         geo: geo ? {
-          city: geo.city,
-          address: geo.address,
-          state: geo.state,
-          country: geo.country,
-        } : {},
-        revenue: revenue ? { ...revenue } : {},
-        social: social ? { ...social } : {},
+          city: geo.city || "",
+          address: geo.address || "",
+          state: geo.state || "",
+          country: geo.country || ""
+        } : {
+          city: "",
+          address: "",
+          state: "",
+          country: ""
+        },
+        revenue: revenue ? {
+          "Latest Funding": revenue["Latest Funding"] || "",
+          "Latest Funding Amount": revenue["Latest Funding Amount"] || null,
+          companyid: revenue.companyid
+        } : {
+          "Latest Funding": "",
+          "Latest Funding Amount": null,
+          companyid: company ? company.companyid : null
+        },
+        social: social ? {
+          "Company Linkedin Url": social["Company Linkedin Url"] || "",
+          "Facebook Url": social["Facebook Url"] || "",
+          "Twitter Url": social["Twitter Url"] || "",
+          companyid: social.companyid
+        } : {
+          "Company Linkedin Url": "",
+          "Facebook Url": "",
+          "Twitter Url": "",
+          companyid: company ? company.companyid : null
+        }
       };
     });
     res.status(200).json(combinedData);
@@ -100,7 +144,7 @@ app.get('/api/ressources/all', async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur lors de la récupération des données.' });
   }
 });
-
+ 
 // Ajouter un client
 app.post('/api/clients', async (req, res) => {
   const client = await pool.connect();
