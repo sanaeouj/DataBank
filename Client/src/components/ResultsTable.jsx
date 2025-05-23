@@ -58,105 +58,89 @@ const ResultsTable = ({ data = [], filters }) => {
 
   // Aplatir tous les objets et sous-objets pour que chaque attribut soit une colonne
   const flattenData = (data) =>
-    data.map((item) => {
-      const flatten = (obj, prefix = "") => {
-        let result = {};
-        for (const key in obj) {
-          if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            const fullKey = prefix ? `${prefix}.${key}` : key;
-            if (
-              obj[key] &&
-              typeof obj[key] === "object" &&
-              !Array.isArray(obj[key])
-            ) {
-              Object.assign(result, flatten(obj[key], fullKey));
-            } else {
-              result[fullKey] = obj[key] !== undefined ? obj[key] : "N/A";
-            }
+  data.map((item) => {
+    const flatten = (obj, prefix = "") => {
+      let result = {};
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          const fullKey = prefix ? `${prefix}_${key}` : key;
+          if (
+            obj[key] &&
+            typeof obj[key] === "object" &&
+            !Array.isArray(obj[key])
+          ) {
+            Object.assign(result, flatten(obj[key], fullKey));
+          } else {
+             result[fullKey] = obj[key] !== null && obj[key] !== undefined ? obj[key] : "";
           }
         }
-        return result;
-      };
-      return flatten(item);
-    });
+      }
+      return result;
+    };
+    return flatten(item);
+  });
 
   // Générer dynamiquement toutes les colonnes à partir des données aplanies
   const getColumnsFromData = (data) => {
     if (!data || !data.length) return [];
     const columns = [];
     const headerMapping = {
-      mobilePhone: "Mobile Phone",
-      EmailStatus: "Email Status",
-      "company.company": "Company",
-      "company.email": "Company Email",
-      "company.phone": "Company Phone",
-      "company.employees": "Company Employees",
-      "company.industry": "Industry",
-      "company.SEO Description": "SEO Description",
-      "company.Annual Revenue": "Annual Revenue",
-      "company.Total Funding": "Total Funding",
-      "geo.address": "Address",
-      "geo.city": "City",
-      "geo.state": "State",
-      "geo.country": "Country",
-      "social.Company Linkedin Url": "LinkedIn",
-      "social.Facebook Url": "Facebook",
-      "social.Twitter Url": "Twitter",
-      "revenue.Total Funding": "Total Funding",
-      "revenue.Annual Revenue": "Annual Revenue",
-      "revenue.Latest Funding Amount": "Latest Funding Amount",
-      "revenue.Latest Funding": "Latest Funding",
+      "First Name": "Prénom",
+      "Last Name": "Nom",
+      "mobilePhone": "Téléphone mobile",
+      "EmailStatus": "Statut Email",
+      "company_company": "Entreprise",
+      "company_Email": "Email Entreprise",
+      "company_Phone": "Téléphone Entreprise",
+      "company_employees": "Employés",
+      "company_industry": "Industrie",
+      "company_SEO Description": "Description SEO",
+      "geo_address": "Adresse",
+      "geo_city": "Ville",
+      "geo_state": "État/Région",
+      "geo_country": "Pays",
+      "social_Company Linkedin Url": "LinkedIn",
+      "social_Facebook Url": "Facebook",
+      "social_Twitter Url": "Twitter",
+      "revenue_Annual Revenue": "Revenu Annuel",
+      "revenue_Total Funding": "Financement Total",
+      "revenue_Latest Funding Amount": "Montant dernier financement",
+      "revenue_Latest Funding": "Date dernier financement",
     };
 
-    const extractFields = (obj, prefix = "") => {
-      for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          const fullKey = prefix ? `${prefix}.${key}` : key;
-          if (!hiddenColumns.includes(fullKey)) {
-            if (
-              typeof obj[key] === "object" &&
-              obj[key] !== null &&
-              !Array.isArray(obj[key])
-            ) {
-              extractFields(obj[key], fullKey);
-            } else {
-              columns.push({
-                field: fullKey,
-                headerName:
-                  headerMapping[fullKey] ||
-                  fullKey
-                    .split(".")
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" "),
-                width: 200,
-                renderCell: (params) =>
-                  fullKey === "revenue.Latest Funding" ? (
-                    formatDate(params.value)
-                  ) : /Url$/i.test(fullKey) ? (
-                    <a
-                      href={
-                        params.value &&
-                        (params.value.startsWith("http://") ||
-                          params.value.startsWith("https://"))
-                          ? params.value
-                          : `http://${params.value}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "#90caf9" }}
-                    >
-                      {params.value ? "Link" : ""}
-                    </a>
-                  ) : (
-                    params.value || "N/A"
-                  ),
-              });
+    const sampleItem = flattenData([data[0]])[0];
+    for (const key in sampleItem) {
+      if (!hiddenColumns.some(hc => key.includes(hc))) {
+        columns.push({
+          field: key,
+          headerName: headerMapping[key] ||
+            key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          width: 200,
+          renderCell: (params) => {
+            if (key === "revenue_Latest Funding") {
+              return formatDate(params.value);
+            } else if (key.includes("Url")) {
+              return params.value ? (
+                <a
+                  href={
+                    params.value.startsWith("http://") ||
+                    params.value.startsWith("https://")
+                      ? params.value
+                      : `https://${params.value}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#90caf9" }}
+                >
+                  Lien
+                </a>
+              ) : "";
             }
+            return params.value || "";
           }
-        }
+        });
       }
-    };
-    extractFields(data[0]);
+    }
     return columns;
   };
 
