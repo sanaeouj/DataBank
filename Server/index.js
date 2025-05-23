@@ -71,25 +71,25 @@ app.get('/api/ressources/all', async (req, res) => {
   try {
     const personalDetails = await pool.query('SELECT * FROM personaldetails');
     const companyDetails = await pool.query('SELECT * FROM companydetails');
-    const geoLocalisation = await pool.query('SELECT * FROM geolocalisation');  
+    const geoLocalisation = await pool.query('SELECT * FROM geolocalisation');
     const companyRevenue = await pool.query('SELECT * FROM companyrevenue');
     const socialDetails = await pool.query('SELECT * FROM socialdetails');
-    
+
     const combinedData = personalDetails.rows.map((personal) => {
       const company = companyDetails.rows.find(c => c.personalid === personal.personalid);
-      const geo = geoLocalisation.rows.find(g => g.companyid === (company ? company.companyid : null));  
-      const revenue = companyRevenue.rows.find(r => r.companyid === (company ? company.companyid : null));  
-      const social = socialDetails.rows.find(s => s.companyid === (company ? company.companyid : null));  
-      
+      const geo = geoLocalisation.rows.find(g => g.companyid === (company ? company.companyid : null));
+      const revenue = companyRevenue.rows.find(r => r.companyid === (company ? company.companyid : null));
+      const social = socialDetails.rows.find(s => s.companyid === (company ? company.companyid : null));
+
       return {
         ...personal,
         company: company ? { ...company } : {},
-        geo: geo ? { 
-          city: geo.city, 
-          address: geo.address,  
-          state: geo.state, 
+        geo: geo ? {
+          city: geo.city,
+          address: geo.address,
+          state: geo.state,
           country: geo.country,
-         } : {},
+        } : {},
         revenue: revenue ? { ...revenue } : {},
         social: social ? { ...social } : {},
       };
@@ -97,7 +97,7 @@ app.get('/api/ressources/all', async (req, res) => {
     res.status(200).json(combinedData);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Erreur serveur lors de la récupération des données.');
+    res.status(500).json({ error: 'Erreur serveur lors de la récupération des données.' });
   }
 });
 
@@ -121,7 +121,7 @@ app.post('/api/clients', async (req, res) => {
     } = req.body;
 
     // Required Fields Validation
-    if (!firstName || !lastName  || !company || !geo || !companyRevenue) {
+    if (!firstName || !lastName || !email || !company || !geo || !companyRevenue) {
       return res.status(400).json({ error: "Les champs requis sont manquants." });
     }
     
