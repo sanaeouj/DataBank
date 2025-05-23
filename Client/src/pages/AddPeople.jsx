@@ -1,646 +1,543 @@
-import React, { useState, useEffect } from "react";
-import { DataGrid } from "@mui/x-data-grid";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Checkbox,
-  FormControlLabel,
-  Box,
-  Snackbar,
-  Alert,
-  Typography,
-  Button,
-} from "@mui/material";
+import React, { useState } from "react";
+import Sidebar from "../components/Sidebar";
+import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import axios from "axios";
-import CustomToolbar from "./CustomToolbar";
-import EditDialog from "./EditDialog";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 
-// headerMapping doit être déclaré ici, sans indentation
-const headerMapping = {
-  "First Name": "First Name",
-  "Last Name": "Last Name",
-  "mobilePhone": "Mobile Phone",
-  "EmailStatus": "Email Status",
-  "company_company": "Company",
-  "company_Email": "Company Email",
-  "company_Phone": "Company Phone",
-  "company_employees": "Employees",
-  "company_industry": "Industry",
-  "company_SEO Description": "SEO Description",
-  "geo_address": "Address",
-  "geo_city": "City",
-  "geo_state": "State/Region",
-  "geo_country": "Country",
-  "social_Company Linkedin Url": "LinkedIn",
-  "social_Facebook Url": "Facebook",
-  "social_Twitter Url": "Twitter",
-  "revenue_Annual Revenue": "Annual Revenue",
-  "revenue_Total Funding": "Total Funding",
-  "revenue_Latest Funding Amount": "Latest Funding Amount",
-  "revenue_Latest Funding": "Latest Funding Date",
+const importMapping = {
+  "First Name": "firstName",
+  "Last Name": "lastName",
+  "title": "title",
+  "seniority": "seniority",
+  "departments": "departments",
+  "Mobile Phone": "mobilePhone",
+  "email": "email",
+  "Email Status": "EmailStatus",
+  "company_companyid": "company.companyid",
+  "Company": "company.company",
+  "Company Email": "company.email",
+  "Company Phone": "company.phone",
+  "Employees": "company.employees",
+  "Industry": "company.industry",
+  "SEO Description": "company.seoDescription",
+  "company_personalid": "company.personalid",
+  "City": "geo.city",
+  "Address": "geo.address",
+  "State/Region": "geo.state",
+  "Country": "geo.country",
+  "Latest Funding Date": "companyRevenue.latestFunding",
+  "Latest Funding Amount": "companyRevenue.latestFundingAmount",
+  "revenue_companyid": "companyRevenue.companyid",
+  "LinkedIn": "social.linkedinUrl",
+  "Facebook": "social.facebookUrl",
+  "Twitter": "social.twitterUrl",
+  "social_companyid": "social.companyid"
 };
 
-const ResultsTable = ({ data = [], filters }) => {
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [filterValues, setFilterValues] = useState({});
-  const [savedFilters, setSavedFilters] = useState({});
-  const [pageSize, setPageSize] = useState(10);
-  const [visibleColumns, setVisibleColumns] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [currentRow, setCurrentRow] = useState(null);
-  const [editFormData, setEditFormData] = useState({
-    personalDetails: {},
-    companyDetails: {},
-    geoDetails: {},
-    revenueDetails: {},
-    socialDetails: {},
-  });
+const API_BASE_URL = "https://databank-yndl.onrender.com";
 
-  const hiddenColumns = [
-    "personalid",
-    "companycompanyid",
-    "companypersonalid",
-    "geogeoid",
-    "geocompanyid",
-    "revenuerevenueid",
-    "revenuecompanyid",
-    "socialcompanyid",
-    "socialsocialid",
-  ];
-
-  const flattenData = (data) =>
-    data.map((item) => {
-      const flatten = (obj, prefix = "") => {
-        let result = {};
-        for (const key in obj) {
-          if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            const fullKey = prefix ? `${prefix}_${key}` : key;
-            if (
-              obj[key] &&
-              typeof obj[key] === "object" &&
-              !Array.isArray(obj[key])
-            ) {
-              Object.assign(result, flatten(obj[key], fullKey));
-            } else {
-              result[fullKey] = obj[key] !== null && obj[key] !== undefined ? obj[key] : "";
-            }
-          }
-        }
-        return result;
-      };
-      return flatten(item);
-    });
-
-  const getColumnsFromData = (data) => {
-    if (!data || !data.length) return [];
-    const columns = [];
-    const sampleItem = flattenData([data[0]])[0];
-    for (const key in sampleItem) {
-      if (!hiddenColumns.some(hc => key.includes(hc))) {
-        columns.push({
-          field: key,
-          headerName: headerMapping[key] ||
-            key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-          width: 200,
-          renderCell: (params) => {
-            if (key === "revenue_Latest Funding") {
-              return formatDate(params.value);
-            } else if (key.includes("Url")) {
-              return params.value ? (
-                <a
-                  href={
-                    params.value.startsWith("http://") ||
-                    params.value.startsWith("https://")
-                      ? params.value
-                      : `https://${params.value}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#90caf9" }}
-                >
-                  Lien
-                </a>
-              ) : "";
-            }
-            return params.value || "";
-          }
-        });
-      }
-    }
-    return columns;
-  };
-
-  useEffect(() => {
-    const applyFilters = () => {
-      if (!data || !data.length) return [];
-      return flattenData(data).filter((row) => {
-        return Object.entries(filterValues).every(([key, value]) => {
-          if (!value) return true;
-          const cellValue = row[key]?.toString().toLowerCase() || "";
-          return cellValue.includes(value.toLowerCase());
-        });
-      });
-    };
-    setFilteredData(applyFilters());
-  }, [data, filterValues]);
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("fr-FR");
-  };
-
-  const handleEditClick = (row) => {
-    setCurrentRow(row);
-    const formData = {
-      personalDetails: {
-        firstName: row['First Name'] || '',
-        lastName: row['Last Name'] || '', 
-        title: row.title || "",
-        seniority: row.seniority || "",
-        departments: row.departments || "",
-        mobilePhone: row.mobilePhone || "",
-        email: row.email || "",
-        EmailStatus: row.EmailStatus || "",
-      },
-      companyDetails: {
-        company: row.company_company || "",
-        email: row.company_Email || "",
-        phone: row.company_Phone || "",
-        employees: row.company_employees ? row.company_employees.toString() : "",
-        industry: row.company_industry || "",
-        seoDescription: row['company_SEO Description'] || "",  
-      },
-      geoDetails: {
-        address: row.geo_address || "",
-        city: row.geo_city || "",
-        state: row.geo_state || "",
-        country: row.geo_country || "",
-      },
-      revenueDetails: {
-        latestFunding: row['revenue_Latest Funding'] ? formatDateForInput(row['revenue_Latest Funding']) : "",
-        latestFundingAmount: row['revenue_Latest Funding Amount'] ? row['revenue_Latest Funding Amount'].toString() : "", 
-      },
-      socialDetails: {
-        linkedinUrl: row['social_Company Linkedin Url'] || '',
-        facebookUrl: row['social_Facebook Url'] || '',
-        twitterUrl: row['social_Twitter Url'] || '',
-      },
-    };
-    setEditFormData(formData);
-    setEditDialogOpen(true);
-  };
-
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];  
-  };
-
-  const handleUpdateRow = async () => {
-    try {
-      if (!currentRow || !currentRow.personalid) {
-        throw new Error("No row selected for update");
-      }
-      const updateData = {
-        personalDetails: {
-          firstName: editFormData.personalDetails.firstName || '',
-          lastName: editFormData.personalDetails.lastName || '',
-          title: editFormData.personalDetails.title || '',
-          seniority: editFormData.personalDetails.seniority || '',
-          departments: editFormData.personalDetails.departments || '',
-          mobilePhone: editFormData.personalDetails.mobilePhone || '',
-          email: editFormData.personalDetails.email || '',
-          EmailStatus: editFormData.personalDetails.EmailStatus || '',
-        },
-        companyDetails: {
-          company: editFormData.companyDetails.company || '',
-          email: editFormData.companyDetails.email || '',
-          phone: editFormData.companyDetails.phone || '',
-          employees: editFormData.companyDetails.employees || '',
-          industry: editFormData.companyDetails.industry || '',
-          seoDescription: editFormData.companyDetails.seoDescription || '',
-        },
-        geoDetails: {
-          address: editFormData.geoDetails.address || '',
-          city: editFormData.geoDetails.city || '',
-          state: editFormData.geoDetails.state || '',
-          country: editFormData.geoDetails.country || '',
-        },
-        revenueDetails: {
-          latestFunding: editFormData.revenueDetails.latestFunding || null,
-          latestFundingAmount: editFormData.revenueDetails.latestFundingAmount || '',
-        },
-        socialDetails: {
-          linkedinUrl: editFormData.socialDetails.linkedinUrl || '',
-          facebookUrl: editFormData.socialDetails.facebookUrl || '',
-          twitterUrl: editFormData.socialDetails.twitterUrl || '',
-        }
-      };
-      await axios.put(
-        `https://databank-yndl.onrender.com/api/ressources/update/${currentRow.personalid}`,
-        updateData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const updatedData = filteredData.map((row) => {
-        if (row.personalid === currentRow.personalid) {
-          return {
-            ...row,
-            'First Name': updateData.personalDetails.firstName,
-            'Last Name': updateData.personalDetails.lastName,
-            title: updateData.personalDetails.title,
-            seniority: updateData.personalDetails.seniority,
-            departments: updateData.personalDetails.departments,
-            mobilePhone: updateData.personalDetails.mobilePhone,
-            email: updateData.personalDetails.email,
-            EmailStatus: updateData.personalDetails.EmailStatus,
-            company_company: updateData.companyDetails.company,
-            company_Email: updateData.companyDetails.email,
-            company_Phone: updateData.companyDetails.phone,
-            company_employees: updateData.companyDetails.employees,
-            company_industry: updateData.companyDetails.industry,
-            'company_SEO Description': updateData.companyDetails.seoDescription,
-            geo_address: updateData.geoDetails.address,
-            geo_city: updateData.geoDetails.city,
-            geo_state: updateData.geoDetails.state,
-            geo_country: updateData.geoDetails.country,
-            'revenue_Latest Funding': updateData.revenueDetails.latestFunding,
-            'revenue_Latest Funding Amount': updateData.revenueDetails.latestFundingAmount,
-            'social_Company Linkedin Url': updateData.socialDetails.linkedinUrl,
-            'social_Facebook Url': updateData.socialDetails.facebookUrl,
-            'social_Twitter Url': updateData.socialDetails.twitterUrl,
-          };
-        }
-        return row;
-      });
-      setFilteredData(updatedData);
-      setEditDialogOpen(false);
-      setSnackbar({
-        open: true,
-        message: "Mise à jour réussie !",
-        severity: "success",
-      });
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
-      let errorMessage = "Échec de la mise à jour";
-      if (error.response) {
-        if (error.response.data && error.response.data.error) {
-          errorMessage = error.response.data.error;
-        }
-      } else if (error.request) {
-        errorMessage = "Pas de réponse du serveur";
-      } else {
-        errorMessage = error.message;
-      }
-      setSnackbar({
-        open: true,
-        message: errorMessage,
-        severity: "error",
-      });
-    }
-  };
-
-  const handleDeleteRow = async (row) => {
-    if (!window.confirm(`Are you sure you want to delete this row?`)) {
-      return;
-    }
-    try {
-      await axios.delete(`https://databank-yndl.onrender.com/api/ressources/delete/${row.personalid}`);
-      setFilteredData((prev) => prev.filter((item) => item.personalid !== row.personalid));
-      setSnackbar({
-        open: true,
-        message: "Row deleted successfully!",
-        severity: "success",
-      });
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: "Failed to delete row.",
-        severity: "error",
-      });
-    }
-  };
-
-  const exportToCSV = () => {
-    if (!filteredData.length) {
-      alert("No data to export.");
-      return;
-    }
-    const headers = Object.keys(filteredData[0]).filter(
-      (key) => !hiddenColumns.includes(key)
-    );
-    const headerRow = headers.map((key) => headerMapping[key] || key);
-    const csvContent = [
-      headerRow.join(","),
-      ...filteredData.map((row) =>
-        headers
-          .map((header) => {
-            const cellData = (row[header] || "").toString().replace(/"/g, '""');
-            return `"${cellData}"`;
-          })
-          .join(",")
-      ),
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    if (navigator.msSaveBlob) {
-      navigator.msSaveBlob(blob, "ResultsTable_Export.csv");
-    } else {
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", "ResultsTable_Export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
-  const exportToExcel = () => {
-    if (!filteredData.length) {
-      alert("No data to export.");
-      return;
-    }
-    const headers = Object.keys(filteredData[0]).filter(
-      (key) => !hiddenColumns.includes(key)
-    );
-    const filteredExportData = filteredData.map((row) => {
-      const newRow = {};
-      headers.forEach((key) => {
-        newRow[headerMapping[key] || key] = row[key];
-      });
-      return newRow;
-    });
-    const worksheet = XLSX.utils.json_to_sheet(filteredExportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-    XLSX.writeFile(workbook, "ResultsTable_Export.xlsx");
-  };
-
-  const SettingsDialog = () => (
-    <Dialog
-      open={settingsDialogOpen}
-      onClose={() => setSettingsDialogOpen(false)}
-      sx={{ backgroundColor: "#333", color: "white" }}
-    >
-      <DialogTitle style={{ backgroundColor: "#333", color: "white" }}>
-        Filter
-      </DialogTitle>
-      <DialogContent style={{ backgroundColor: "#333", color: "white" }}>
-        {getColumnsFromData(data).map((col) => {
-          const visibleCol = visibleColumns.find(
-            (vCol) => vCol.field === col.field
-          );
-          return (
-            <FormControlLabel
-              key={col.field}
-              control={
-                <Checkbox
-                  checked={visibleCol?.visible || false}
-                  onChange={() =>
-                    setVisibleColumns((prev) =>
-                      prev.map((vCol) =>
-                        vCol.field === col.field
-                          ? { ...vCol, visible: !vCol.visible }
-                          : vCol
-                      )
-                    )
-                  }
-                  style={{ color: "white" }}
-                />
-              }
-              label={col.headerName}
-            />
-          );
-        })}
-      </DialogContent>
-      <DialogActions style={{ backgroundColor: "#333", color: "white" }}>
-        <Button
-          onClick={() => setSettingsDialogOpen(false)}
-          style={{ color: "white" }}
-        >
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-
-  const displayedColumns = [
-    ...getColumnsFromData(data).filter((col) => {
-      const visibleCol = visibleColumns.find((vCol) => vCol.field === col.field);
-      return visibleCol ? visibleCol.visible : true;
-    }),
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 300,
-      renderCell: (params) => (
-        <div style={{ display: "flex", gap: "8px" }}>
-          <Button
-            onClick={() => handleEditClick(params.row)}
-            startIcon={<EditIcon />}
-            variant="contained"
-            color="primary"
-            size="small"
-          >
-            Edit
-          </Button>
-          <Button
-            onClick={() => handleDeleteRow(params.row)}
-            startIcon={<DeleteIcon />}
-            variant="contained"
-            color="error"
-            size="small"
-          >
-            Delete
-          </Button>
-        </div>
-      ),
+const AddPeople = () => {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    title: "",
+    seniority: "",
+    departments: "",
+    mobilePhone: "",
+    email: "",
+    EmailStatus: "",
+    company: {
+      companyid: "",
+      company: "",
+      email: "",
+      phone: "",
+      employees: "",
+      industry: "",
+      seoDescription: "",
+      personalid: ""
     },
-  ];
+    geo: {
+      address: "",
+      city: "",
+      state: "",
+      country: "",
+    },
+    social: {
+      linkedinUrl: "",
+      facebookUrl: "",
+      twitterUrl: "",
+      companyid: ""
+    },
+    companyRevenue: {
+      companyid: "",
+      latestFunding: "",
+      latestFundingAmount: "",
+    },
+  });
+
+  const [fileData, setFileData] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const inputStyle = {
+    margin: "10px",
+    width: "100%",
+    height: "40px",
+    padding: "10px",
+    fontSize: "13px",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    backgroundColor: "#1e1e1e",
+    color: "#fff",
+  };
+
+  const labelStyle = {
+    fontSize: "13px",
+    color: "#fff",
+    marginBottom: "5px",
+  };
+
+  const containerStyle = {
+    margin: "10px 0",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: "20px",
+    alignItems: "center",
+  };
+
+  const inputContainerStyle = {
+    display: "flex",
+    flexDirection: "column",
+    margin: "20px",
+    gap: "10px",
+    fontSize: "13px",
+  };
+
+  const buttonStyle = {
+    margin: "10px",
+    padding: "10px",
+    fontSize: "13px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  };
+
+  const disabledButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: "#cccccc",
+    cursor: "not-allowed",
+  };
+
+  const formContainerStyle = {
+    backgroundColor: "#2c2c2c",
+    padding: "20px",
+    borderRadius: "10px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+    margin: "10px 0",
+  };
+
+  const addClientToDatabase = async (client) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/clients`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(client),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to add client");
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Error adding client:", error);
+      throw error;
+    }
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const fileExtension = file.name.split(".").pop().toLowerCase();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const data = e.target.result;
+      try {
+        if (fileExtension === "csv") {
+          Papa.parse(data, {
+            header: true,
+            complete: (results) => {
+              console.log("Parsed CSV data:", results.data);
+              setFileData(results.data.filter(row => Object.keys(row).length > 0));
+            },
+            error: (error) => {
+              console.error("CSV parsing error:", error);
+              alert("Error parsing CSV file. Please check the file format.");
+            }
+          });
+        } else if (fileExtension === "xlsx" || fileExtension === "xls") {
+          const workbook = XLSX.read(data, { type: "binary" });
+          const sheetName = workbook.SheetNames[0];
+          const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+          console.log("Parsed Excel data:", jsonData);
+          setFileData(jsonData.filter(row => Object.keys(row).length > 0));
+        } else {
+          throw new Error("Unsupported file type");
+        }
+      } catch (error) {
+        console.error("File processing error:", error);
+        alert(`Error processing file: ${error.message}`);
+      }
+    };
+
+    reader.onerror = () => {
+      alert("Error reading file. Please try again.");
+    };
+
+    if (fileExtension === "csv") {
+      reader.readAsText(file);
+    } else {
+      reader.readAsBinaryString(file);
+    }
+  };
+
+  const handleAddFile = async () => {
+    if (fileData.length === 0) {
+      alert("No data to add. Please upload a valid file.");
+      return;
+    }
+
+    setIsProcessing(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      for (const [index, client] of fileData.entries()) {
+        try {
+          let newClient = JSON.parse(JSON.stringify(formData));
+          
+          // Process each field in the CSV row
+          Object.entries(client).forEach(([csvKey, value]) => {
+            const trimmedKey = csvKey.trim();
+            if (!trimmedKey) return;
+            
+            const formKey = importMapping[trimmedKey];
+            if (!formKey) {
+              console.warn(`No mapping found for CSV column: ${trimmedKey}`);
+              return;
+            }
+
+            const keys = formKey.split('.');
+            let current = newClient;
+            
+            for (let i = 0; i < keys.length - 1; i++) {
+              if (!current[keys[i]]) {
+                current[keys[i]] = {};
+              }
+              current = current[keys[i]];
+            }
+            
+            current[keys[keys.length - 1]] = value;
+          });
+
+          console.log(`Processing client ${index + 1}/${fileData.length}:`, newClient);
+
+          // Validate required fields
+          if (!newClient.firstName || !newClient.lastName || !newClient.email || !newClient.company?.company) {
+            console.warn(`Missing required fields for client ${index + 1}`);
+            errorCount++;
+            continue;
+          }
+
+          await addClientToDatabase(newClient);
+          successCount++;
+        } catch (error) {
+          console.error(`Error processing client ${index + 1}:`, error);
+          errorCount++;
+        }
+      }
+
+      alert(`✅ ${successCount} clients successfully added!\n❌ ${errorCount} clients failed.`);
+      setFileData([]);
+    } catch (error) {
+      console.error("Batch processing error:", error);
+      alert(`❌ An error occurred during batch processing: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const keys = name.split('.');
+    
+    setFormData(prevState => {
+      const newState = { ...prevState };
+      let current = newState;
+      
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) {
+          current[keys[i]] = {};
+        }
+        current = current[keys[i]];
+      }
+      
+      current[keys[keys.length - 1]] = value;
+      return newState;
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.company?.company) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      const response = await addClientToDatabase(formData);
+      alert("✅ Client successfully added!");
+      
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        title: "",
+        seniority: "",
+        departments: "",
+        mobilePhone: "",
+        email: "",
+        EmailStatus: "",
+        company: {
+          companyid: "",
+          company: "",
+          email: "",
+          phone: "",
+          employees: "",
+          industry: "",
+          seoDescription: "",
+          personalid: ""
+        },
+        geo: {
+          address: "",
+          city: "",
+          state: "",
+          country: "",
+        },
+        social: {
+          linkedinUrl: "",
+          facebookUrl: "",
+          twitterUrl: "",
+          companyid: ""
+        },
+        companyRevenue: {
+          companyid: "",
+          latestFunding: "",
+          latestFundingAmount: "",
+        },
+      });
+    } catch (error) {
+      alert(`❌ Error: ${error.message}`);
+    }
+  };
+
+  const formatLabel = (label) => {
+    return label
+      .replace(/([A-Z])/g, " $1")
+      .replace(/_/g, " ")
+      .replace(/\./g, " > ")
+      .toLowerCase()
+      .replace(/(^|\s)\w/g, (c) => c.toUpperCase());
+  };
 
   return (
-    <div
-      style={{
-        height: "90vh", 
-        overflowX: "auto",
-        backgroundColor: "#333",
-        color: "white",
-      }}
-    >
-      <CustomToolbar 
-        exportToCSV={exportToCSV}
-        exportToExcel={exportToExcel}
-        setSettingsDialogOpen={setSettingsDialogOpen}
-      />
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 2,
-          padding: 2,
-        }}
-      >
-        {displayedColumns.map((col) => (
-          <TextField
-            key={col.field}
-            label={col.headerName}
-            value={filterValues[col.field] || ""}
-            onChange={(e) =>
-              setFilterValues((prev) => ({
-                ...prev,
-                [col.field]: e.target.value,
-              }))
-            }
-            variant="outlined"
-            size="small"
-            sx={{
-              flex: 1,
-              minWidth: "150px",
-            }}
-            InputProps={{ style: { color: "white" } }}
-            InputLabelProps={{ style: { color: "white" } }}
+    <div style={{ display: "flex", width: "90vw", height: "100vh", backgroundColor: "#242424" }}>
+      <Sidebar />
+      <div style={{ flexGrow: 1, padding: "50px", color: "#333", overflowY: "auto" }}>
+        <h1 style={{ color: "#fff", marginBottom: "20px" }}>Add People</h1>
+
+        <div style={formContainerStyle}>
+          <h3 style={{ color: "#fff" }}>Import Clients from File</h3>
+          <input
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            onChange={handleFileChange}
+            style={{ fontSize: "16px", margin: "10px", color: "#fff" }}
+            disabled={isProcessing}
           />
-        ))}
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "flex-start",
-          alignItems: "center",
-          padding: "8px 16px",
-          backgroundColor: "#1e1e1e",
-          color: "white",
-          fontSize: "16px",
-          fontWeight: "bold",
-        }}
-      >
-        <Typography variant="body1" sx={{ color: "white" }}>
-          Total Filter: {filteredData.length}
-        </Typography>
-      </Box>
-      <DataGrid
-        rows={filteredData}
-        columns={displayedColumns}
-        getRowId={(row) => row.personalid || Math.random()}
-        pageSize={pageSize}
-        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-        rowsPerPageOptions={[5, 10, 20, 100]}
-        checkboxSelection
-        disableRowSelectionOnClick
-        sx={{
-          fontSize: "20px",
-          height: "100%",
-          overflowX: "auto",
-          backgroundColor: "#333",
-          color: "white",
-          width: `${Math.max(
-            displayedColumns.reduce((total, col) => total + (col.width || 200), 0),
-            window.innerWidth
-          )}px`,
-          "& .MuiDataGrid-columnHeaders": {
-            backgroundColor: "#333",
-            color: "white",
-            fontWeight: "bold",
-          },
-          "& .MuiDataGrid-row": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-          },
-          "& .MuiDataGrid-row:hover": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-          },
-          "& .MuiDataGrid-footerContainer": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-          },
-          "& .MuiDataGrid-filler": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-          },
-          "& .MuiDataGrid-cell:hover": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-          },
-          "& .MuiDataGrid-footerCell": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-          },
-          "& .MuiDataGrid-columnHeader": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-            fontWeight: "bold",
-          },
-          "& .MuiDataGrid-columnHeaderTitle": {
-            color: "white",
-            textAlign: "center",
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          },
-          "& .MuiDataGrid-columnHeaderCheckbox": { color: "white" },
-          "& .MuiDataGrid-rowCheckbox": { color: "white" },
-          "& .MuiTablePagination-displayedRows": { color: "white" },
-          "& .MuiTablePagination-actions": { color: "white" },
-          "& .MuiTablePagination-selectIcon": { color: "white" },
-          "& .MuiTablePagination-selectLabel": { color: "white" },
-          "& .MuiTablePagination-menuItem": { color: "white" },
-          "& .MuiTablePagination-menuItem:hover": {
-            backgroundColor: "#444",
-            color: "white",
-          },
-          "& .MuiTablePagination-menuItem.selected": {
-            backgroundColor: "#444",
-            color: "white",
-          },
-          "& .MuiDataGrid-cell": {
-            backgroundColor: "#1e1e1e",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-          },
-        }}
-      />
-      <SettingsDialog />
-      <EditDialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        editFormData={editFormData}
-        setEditFormData={setEditFormData}
-        handleUpdateRow={handleUpdateRow}
-      />
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+          <button 
+            type="button" 
+            style={isProcessing ? disabledButtonStyle : buttonStyle} 
+            onClick={handleAddFile}
+            disabled={isProcessing || fileData.length === 0}
+          >
+            {isProcessing ? "Processing..." : "Process File Data"}
+          </button>
+          {fileData.length > 0 && (
+            <p style={{ color: "#fff", fontSize: "14px", marginTop: "10px" }}>
+              Found {fileData.length} records to import
+            </p>
+          )}
+          <p style={{ color: "#aaa", fontSize: "12px", marginTop: "10px" }}>
+            Supported formats: CSV, Excel (.xlsx, .xls)
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={formContainerStyle}>
+          <h3 style={{ color: "#fff" }}>Personal Information</h3>
+          <div style={containerStyle}>
+            {["firstName", "lastName", "title", "seniority", "departments", "mobilePhone", "email"].map((field) => (
+              <div style={inputContainerStyle} key={field}>
+                <label style={labelStyle}>{formatLabel(field)}*:</label>
+                <input
+                  style={inputStyle}
+                  type={field === "email" ? "email" : "text"}
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleChange}
+                  required={["firstName", "lastName", "email"].includes(field)}
+                />
+              </div>
+            ))}
+            <div style={inputContainerStyle}>
+              <label style={labelStyle}>Email Status*:</label>
+              <select
+                style={{ ...inputStyle, appearance: "none", lineHeight: "normal" }}
+                name="EmailStatus"
+                value={formData.EmailStatus}
+                onChange={handleChange}
+                required
+              >
+                <option value="">-- Select Status --</option>
+                <option value="Valid">Valid</option>
+                <option value="Invalid">Invalid</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+          </div>
+
+          <h3 style={{ color: "#fff" }}>Company Information</h3>
+          <div style={containerStyle}>
+            {["company", "email", "phone", "employees", "industry", "seoDescription"].map((field) => (
+              <div style={inputContainerStyle} key={field}>
+                <label style={labelStyle}>
+                  {formatLabel(field)}{field === "company" ? "*" : ""}:
+                </label>
+                <input
+                  style={inputStyle}
+                  type={field === "employees" ? "number" : "text"}
+                  name={`company.${field}`}
+                  value={formData.company[field] || ""}
+                  onChange={handleChange}
+                  required={field === "company"}
+                />
+              </div>
+            ))}
+            <div style={inputContainerStyle}>
+              <label style={labelStyle}>Company ID:</label>
+              <input
+                style={inputStyle}
+                type="text"
+                name="company.companyid"
+                value={formData.company.companyid || ""}
+                onChange={handleChange}
+              />
+            </div>
+            <div style={inputContainerStyle}>
+              <label style={labelStyle}>Personal ID:</label>
+              <input
+                style={inputStyle}
+                type="text"
+                name="company.personalid"
+                value={formData.company.personalid || ""}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <h3 style={{ color: "#fff" }}>Geolocation</h3>
+          <div style={containerStyle}>
+            {["address", "city", "state", "country"].map((field) => (
+              <div style={inputContainerStyle} key={field}>
+                <label style={labelStyle}>{formatLabel(field)}:</label>
+                <input
+                  style={inputStyle}
+                  type="text"
+                  name={`geo.${field}`}
+                  value={formData.geo[field] || ""}
+                  onChange={handleChange}
+                />
+              </div>
+            ))}
+          </div>
+
+          <h3 style={{ color: "#fff" }}>Social Media</h3>
+          <div style={containerStyle}>
+            {["linkedinUrl", "facebookUrl", "twitterUrl"].map((field) => (
+              <div style={inputContainerStyle} key={field}>
+                <label style={labelStyle}>
+                  {formatLabel(field.replace("Url", " URL"))}:
+                </label>
+                <input
+                  style={inputStyle}
+                  type="url"
+                  name={`social.${field}`}
+                  value={formData.social[field] || ""}
+                  onChange={handleChange}
+                />
+              </div>
+            ))}
+            <div style={inputContainerStyle}>
+              <label style={labelStyle}>Social Company ID:</label>
+              <input
+                style={inputStyle}
+                type="text"
+                name="social.companyid"
+                value={formData.social.companyid || ""}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <h3 style={{ color: "#fff" }}>Company Revenue Information</h3>
+          <div style={containerStyle}>
+            {["latestFunding", "latestFundingAmount"].map((field) => (
+              <div style={inputContainerStyle} key={field}>
+                <label style={labelStyle}>{formatLabel(field)}:</label>
+                <input
+                  style={inputStyle}
+                  type={field === "latestFunding" ? "date" : "number"}
+                  name={`companyRevenue.${field}`}
+                  value={formData.companyRevenue[field] || ""}
+                  onChange={handleChange}
+                />
+              </div>
+            ))}
+            <div style={inputContainerStyle}>
+              <label style={labelStyle}>Revenue Company ID:</label>
+              <input
+                style={inputStyle}
+                type="text"
+                name="companyRevenue.companyid"
+                value={formData.companyRevenue.companyid || ""}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            style={buttonStyle}
+            disabled={isProcessing}
+          >
+            {isProcessing ? "Processing..." : "Add Client"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default ResultsTable;
+export default AddPeople;
