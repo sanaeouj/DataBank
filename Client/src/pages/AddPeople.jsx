@@ -3,8 +3,7 @@ import Sidebar from "../components/Sidebar";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
-// Mapping pour l'import (labels lisibles et clés brutes)
-const importMapping = {
+ const importMapping = {
   "First Name": "firstName",
   "Last Name": "lastName",
   "Title": "title",
@@ -50,8 +49,8 @@ const importMapping = {
   "socialFacebook Url": "social.facebookUrl",
   "Twitter": "social.twitterUrl",
   "socialTwitter Url": "social.twitterUrl",
-  // Ajoute ici d'autres mappings si besoin
-};
+  };
+const API_BASE_URL = "https://databank-yndl.onrender.com";
 
 const AddPeople = () => {
   const [formData, setFormData] = useState({
@@ -149,7 +148,7 @@ const AddPeople = () => {
 
   const addClientToDatabase = async (client) => {
     try {
-      const response = await fetch("http://localhost:3000/api/clients", {
+    const response = await fetch(`${API_BASE_URL}/api/clients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(client),
@@ -252,7 +251,7 @@ const AddPeople = () => {
     e.preventDefault();
     try {
       const payload = { ...formData };
-      const response = await fetch("http://localhost:3000/api/clients", {
+    const response = await fetch(`${API_BASE_URL}/api/clients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
