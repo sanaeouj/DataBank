@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios"; // Import axios
+import axios from "axios";
 import {
   Box,
   Typography,
@@ -9,7 +9,7 @@ import {
   TableCell,
   TableRow,
   TableContainer,
-  TableHead, // Import TableHead
+  TableHead,
   Divider,
   Button,
   Chip,
@@ -19,6 +19,8 @@ import {
   DialogActions,
 } from "@mui/material";
 import { ArrowLeft } from "lucide-react";
+
+const API_BASE_URL = "https://databank-yndl.onrender.com";
 
 const CompanyDetails = ({ company, onBack }) => {
   const [openEmployeesDialog, setOpenEmployeesDialog] = useState(false);
@@ -41,21 +43,21 @@ const CompanyDetails = ({ company, onBack }) => {
   };
 
   // Fetch employees for the selected company
-const fetchEmployees = async () => {
-  try {
-     const response = await axios.get(
-      `http://localhost:3000/api/company/employees/${encodeURIComponent(company.company)}`
-    );
-    setEmployees(response.data);
-  } catch (error) {
-    console.error("Error fetching employees:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status
-    });
-    alert(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
-  }
-};
+  const fetchEmployees = async () => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/company/employees/${encodeURIComponent(company.company)}`
+      );
+      setEmployees(response.data);
+    } catch (error) {
+      console.error("Error fetching employees:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      alert(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
+    }
+  };
 
   const handleEmployeesClick = () => {
     fetchEmployees();
@@ -64,7 +66,7 @@ const fetchEmployees = async () => {
 
   const handleCloseDialog = () => {
     setOpenEmployeesDialog(false);
-    setEmployees([]); 
+    setEmployees([]);
   };
 
   const flattenedData = flattenCompanyData(company);
@@ -85,9 +87,9 @@ const fetchEmployees = async () => {
     });
     return grouped;
   };
-  
+
   const groupedData = groupKeysByPrefix(flattenedData);
-  
+
   return (
     <Box sx={{ p: 3 }}>
       <Button
@@ -106,9 +108,7 @@ const fetchEmployees = async () => {
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: 'wrap' }}>
         <Chip label="Overview" variant="outlined" />
         <Chip label="Employees" variant="outlined" onClick={handleEmployeesClick} />
-      
       </Box>
-      
       {Object.entries(groupedData).map(([section, keys]) => (
         <React.Fragment key={section}>
           <Divider sx={{ my: 3 }} />

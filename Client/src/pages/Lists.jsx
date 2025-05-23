@@ -11,7 +11,10 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
- const darkTheme = createTheme({
+// Préparation pour un éventuel appel API
+const API_BASE_URL = "https://databank-yndl.onrender.com";
+
+const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: { main: '#60a5fa' },
