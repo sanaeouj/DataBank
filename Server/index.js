@@ -26,14 +26,15 @@ app.use((req, res, next) => {
 });
 
 // Middleware CORS et JSON
+// Middleware CORS et JSON
 app.use(cors({
   origin: [
     'https://databank-f.onrender.com',
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
+ app.use(express.json());
 
 // Logging des requêtes
 app.use((req, res, next) => {
@@ -119,6 +120,9 @@ app.post('/api/clients', async (req, res) => {
       companyRevenue,
     } = req.body;
 
+    if (!firstName || !lastName || !email || !company || !geo || !companyRevenue) {
+      return res.status(400).json({ error: "Les champs requis sont manquants." });
+    }
 
     await client.query('BEGIN');
 
