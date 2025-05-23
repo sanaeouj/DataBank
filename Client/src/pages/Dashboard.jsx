@@ -38,11 +38,11 @@ const Dashboard = () => {
       sx={{
         display: "flex",
         height: "100vh",
-        width: "90vw",
+        width: "80vh",
         bgcolor: "#121212",
         color: "white",
-        margin: 0,
-        padding: 0,
+        margin: 10,
+        padding: 10,
         overflow: "hidden",
         "&::-webkit-scrollbar": {
           display: "none",

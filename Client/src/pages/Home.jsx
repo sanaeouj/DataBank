@@ -14,6 +14,7 @@ import {
   TextField,
   Paper,
   Container,
+  CircularProgress,
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +26,7 @@ const Home = () => {
   const [tasks, setTasks] = useState([]);
   const [data, setData] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("userEmail");
@@ -35,13 +37,20 @@ const Home = () => {
     }
     const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
     setTasks(storedTasks);
+
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/ressources/all");
+        setLoading(true);
+        const response = await fetch("https://databank-yndl.onrender.com/api/ressources/all");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const result = await response.json();
         setData(result);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -124,7 +133,7 @@ const Home = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", height: "100%", width: "100vw", color: "white",bgcolor: "#333" }}>
+    <Box sx={{ display: "flex", height: "100%", width: "80vw", color: "white", bgcolor: "#333" }}>
       <Sidebar />
       <Box component="main" sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <AppBar position="static" sx={{ bgcolor: "#333", boxShadow: "none" }}>
@@ -135,94 +144,101 @@ const Home = () => {
           </Toolbar>
         </AppBar>
         <Container sx={{ px: 3, pt: 4, flexGrow: 1 }}>
-          <Typography variant="h6" gutterBottom>Welcome, {userName} 👋</Typography>
-          <Typography variant="body1" gutterBottom>This is your dashboard where you can manage your onboarding tasks.</Typography>
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 3, mt: 4 }}>
-            <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
-              <Typography variant="h6">Total Customers</Typography>
-              <Typography variant="h4">{totalClients}</Typography>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <CircularProgress />
             </Box>
-            <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
-              <Typography variant="h6">Valid Client</Typography>
-              <Typography variant="h4">{ClientValide}</Typography>
-            </Box>
-            <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
-              <Typography variant="h6">Client Manager</Typography>
-              <Typography variant="h4">{ClientManager}</Typography>
-            </Box>
-            <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
-              <Typography variant="h6">Total Companies</Typography>
-              <Typography variant="h4">{calculateCompanies()}</Typography>
-            </Box>
-         
-          <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2   }}>
-            <Typography variant="h6">Title Distribution:</Typography>
-            {Object.entries(groupByTitle()).map(([title, count]) => (
-              <Typography key={title} variant="body2" sx={{ mt: 1 }}>{title}: {count}</Typography>
-            ))}
-          </Box>
-          <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
-            <Typography variant="h6">Contacts by Country:</Typography>
-            {Object.entries(groupByCountry()).map(([country, count]) => (
-              <Typography key={country} variant="body2" sx={{ mt: 1 }}>{country}: {count}</Typography>
-            ))}
-          </Box>  </Box>
-          <Paper sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2, mt: 4 }}>
-            <Typography variant="h6">Manage Tasks</Typography>
-            <TextField
-              label="New Task"
-              variant="outlined"
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              InputLabelProps={{ style: { color: "white" } }}
-              sx={{
-                m: 2,
-                width: "100%",
-                "& .MuiInputBase-root": { backgroundColor: "#333", color: "white" },
-                "& .MuiOutlinedInput-notchedOutline": { borderColor: "white" },
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleAddTask}
-              sx={{ bgcolor: "#333", color: "white",m:2, "&:hover": { bgcolor: "#fdd835" } }}
-            >
-              Add Task
-            </Button>
-            <List sx={{ mt: 2 }}>
-              {tasks.map((task, index) => (
-                <ListItem key={index} sx={{ color: "white",bgcolor: "#242424", borderRadius: 1, mb: 1 }}>
-                  <ListItemText primary={task.text} />
-                  <ListItemSecondaryAction>
-                    <Checkbox
-                      checked={task.completed}
-                      onChange={() => toggleComplete(index)}
-                      color="white"
-                    />
-                    <Button sx={{ m: 2 }} variant="outlined" color="error" onClick={() => handleDeleteTask(index)}>Delete</Button>
-                    <Button sx={{ m: 2 }}variant="outlined" color="primary" onClick={() => handleEditTask(index)}>Edit</Button>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-          <Box sx={{ mt: "auto", pt: 4 }}>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={{
-                height: 6,
-                borderRadius: 5,
-               
-                "& .MuiLinearProgress-bar": {
-                  backgroundColor: "#f4e33d",
-                },
-              }}
-            />
-            <Typography sx={{ fontSize: "0.75rem", mt: 0.5, color: "#aaa" }}>
-              {progress}% Completed
-            </Typography>
-          </Box>
+          ) : (
+            <>
+              <Typography variant="h6" gutterBottom>Welcome, {userName} 👋</Typography>
+              <Typography variant="body1" gutterBottom>This is your dashboard where you can manage your onboarding tasks.</Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 3, mt: 4 }}>
+                <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
+                  <Typography variant="h6">Total Customers</Typography>
+                  <Typography variant="h4">{totalClients}</Typography>
+                </Box>
+                <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
+                  <Typography variant="h6">Valid Client</Typography>
+                  <Typography variant="h4">{ClientValide}</Typography>
+                </Box>
+                <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
+                  <Typography variant="h6">Client Manager</Typography>
+                  <Typography variant="h4">{ClientManager}</Typography>
+                </Box>
+                <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
+                  <Typography variant="h6">Total Companies</Typography>
+                  <Typography variant="h4">{calculateCompanies()}</Typography>
+                </Box>
+                <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
+                  <Typography variant="h6">Title Distribution:</Typography>
+                  {Object.entries(groupByTitle()).map(([title, count]) => (
+                    <Typography key={title} variant="body2" sx={{ mt: 1 }}>{title}: {count}</Typography>
+                  ))}
+                </Box>
+                <Box sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2 }}>
+                  <Typography variant="h6">Contacts by Country:</Typography>
+                  {Object.entries(groupByCountry()).map(([country, count]) => (
+                    <Typography key={country} variant="body2" sx={{ mt: 1 }}>{country}: {count}</Typography>
+                  ))}
+                </Box>
+              </Box>
+              <Paper sx={{ bgcolor: "#1e1e1e", p: 2, borderRadius: 2, mt: 4 }}>
+                <Typography variant="h6">Manage Tasks</Typography>
+                <TextField
+                  label="New Task"
+                  variant="outlined"
+                  value={newTask}
+                  onChange={(e) => setNewTask(e.target.value)}
+                  InputLabelProps={{ style: { color: "white" } }}
+                  sx={{
+                    m: 2,
+                    width: "100%",
+                    "& .MuiInputBase-root": { backgroundColor: "#333", color: "white" },
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "white" },
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleAddTask}
+                  sx={{ bgcolor: "#333", color: "white", m: 2, "&:hover": { bgcolor: "#fdd835" } }}
+                >
+                  Add Task
+                </Button>
+                <List sx={{ mt: 2 }}>
+                  {tasks.map((task, index) => (
+                    <ListItem key={index} sx={{ color: "white", bgcolor: "#242424", borderRadius: 1, mb: 1 }}>
+                      <ListItemText primary={task.text} />
+                      <ListItemSecondaryAction>
+                        <Checkbox
+                          checked={task.completed}
+                          onChange={() => toggleComplete(index)}
+                          color="white"
+                        />
+                        <Button sx={{ m: 2 }} variant="outlined" color="error" onClick={() => handleDeleteTask(index)}>Delete</Button>
+                        <Button sx={{ m: 2 }} variant="outlined" color="primary" onClick={() => handleEditTask(index)}>Edit</Button>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+              <Box sx={{ mt: "auto", pt: 4 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={progress}
+                  sx={{
+                    height: 6,
+                    borderRadius: 5,
+                    "& .MuiLinearProgress-bar": {
+                      backgroundColor: "#f4e33d",
+                    },
+                  }}
+                />
+                <Typography sx={{ fontSize: "0.75rem", mt: 0.5, color: "#aaa" }}>
+                  {progress}% Completed
+                </Typography>
+              </Box>
+            </>
+          )}
         </Container>
       </Box>
     </Box>

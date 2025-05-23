@@ -3,8 +3,7 @@ import Sidebar from "../components/Sidebar";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
-// Mapping pour l'import (labels lisibles et clés brutes)
-const importMapping = {
+ const importMapping = {
   "First Name": "firstName",
   "Last Name": "lastName",
   "Title": "title",
@@ -50,8 +49,7 @@ const importMapping = {
   "socialFacebook Url": "social.facebookUrl",
   "Twitter": "social.twitterUrl",
   "socialTwitter Url": "social.twitterUrl",
-  // Ajoute ici d'autres mappings si besoin
-};
+ };
 
 const AddPeople = () => {
   const [formData, setFormData] = useState({
@@ -197,8 +195,7 @@ const AddPeople = () => {
     }
     try {
       for (const client of fileData) {
-        // Création dynamique du client à partir du mapping
-        let newClient = JSON.parse(JSON.stringify(formData));
+         let newClient = JSON.parse(JSON.stringify(formData));
         Object.entries(client).forEach(([csvKey, value]) => {
           const formKey = importMapping[csvKey] || csvKey;
           const keys = formKey.split(".");
@@ -210,8 +207,7 @@ const AddPeople = () => {
             newClient[keys[0]][keys[1]][keys[2]] = value;
           }
         });
-        // Vérifie les champs obligatoires
-        if (
+         if (
           !newClient.firstName ||
           !newClient.lastName ||
           !newClient.email ||
