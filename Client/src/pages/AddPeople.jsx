@@ -32,7 +32,10 @@ const importMapping = {
   "Twitter": "social.twitterUrl",
   "social_companyid": "social.companyid"
 };
-
+const normalizeKey = (key) => key.trim().replace(/\s+/g, ' ').toLowerCase();
+const normalizedMapping = Object.fromEntries(
+  Object.entries(importMapping).map(([k, v]) => [normalizeKey(k), v])
+);
 const API_BASE_URL = "https://databank-yndl.onrender.com";
 
 const AddPeople = () => {
@@ -220,32 +223,26 @@ const AddPeople = () => {
           let newClient = JSON.parse(JSON.stringify(formData));
           
           // Process each field in the CSV row
-          Object.entries(client).forEach(([csvKey, value]) => {
-            const trimmedKey = csvKey.trim();
-            if (!trimmedKey) return;
-            
-            const formKey = importMapping[trimmedKey];
-            if (!formKey) {
-              console.warn(`No mapping found for CSV column: ${trimmedKey}`);
-              return;
-            }
-
-            const keys = formKey.split('.');
-            let current = newClient;
-            
-            for (let i = 0; i < keys.length - 1; i++) {
-              if (!current[keys[i]]) {
-                current[keys[i]] = {};
-              }
-              current = current[keys[i]];
-            }
-            
-            current[keys[keys.length - 1]] = value;
-          });
+      Object.entries(client).forEach(([csvKey, value]) => {
+  const normKey = normalizeKey(csvKey);
+  const formKey = normalizedMapping[normKey];
+  if (!formKey) {
+    console.warn('Clé non mappée CSV:', csvKey);
+    return;
+  }
+  const keys = formKey.split('.');
+  let current = newClient;
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (!current[keys[i]]) {
+      current[keys[i]] = {};
+    }
+    current = current[keys[i]];
+  }
+  current[keys[keys.length - 1]] = value;
+});
 
           console.log(`Processing client ${index + 1}/${fileData.length}:`, newClient);
 
-          // Validate required fields
           if (!newClient.firstName || !newClient.lastName || !newClient.email || !newClient.company?.company) {
             console.warn(`Missing required fields for client ${index + 1}`);
             errorCount++;
@@ -260,7 +257,7 @@ const AddPeople = () => {
         }
       }
 
-      alert(`✅ ${successCount} clients successfully added!\n❌ ${errorCount} clients failed.`);
+      alert(`✅ ${successCount} clients successfully added!\n❌ ${errorCount-1} clients failed.`);
       setFileData([]);
     } catch (error) {
       console.error("Batch processing error:", error);
