@@ -220,16 +220,110 @@ app.post('/api/clients', async (req, res) => {
       ]
     );
 
-    // Insert Geo, Social, and Revenue details similarly...
+    const companyData = companyResult.rows[0];
+    const companyId = companyData.companyid; // Get the generated companyid
+
+    let geoResult, socialResult, revenueResult; // Define variables to store results
+
+    // Insert Geo Localisation
+    if (geo) {
+        console.log("Inserting Geo Data:", geo, "for Company ID:", companyId); // Add logging
+        try {
+            geoResult = await client.query(
+              `INSERT INTO geolocalisation (address, city, state, country, companyid)
+               VALUES ($1, $2, $3, $4, $5)
+               RETURNING *`,
+              [
+                geo.address || '',
+                geo.city || '',
+                geo.state || '',
+                geo.country || '',
+                companyId
+              ]
+            );
+            console.log("Geo Data Inserted:", geoResult.rows[0]); // Add logging
+        } catch (geoError) {
+            console.error("Error inserting Geo Data:", geoError);
+            throw geoError; // Re-throw to trigger ROLLBACK
+        }
+    }
+
+    // Insert Social Details
+    if (social) {
+        console.log("Inserting Social Data:", social, "for Company ID:", companyId); // Add logging
+        try {
+            socialResult = await client.query(
+              `INSERT INTO socialdetails ("Company Linkedin Url", "Facebook Url", "Twitter Url", companyid)
+               VALUES ($1, $2, $3, $4)
+               RETURNING *`,
+              [
+                social.linkedinUrl || '',
+                social.facebookUrl || '',
+                social.twitterUrl || '',
+                companyId
+              ]
+            );
+            console.log("Social Data Inserted:", socialResult.rows[0]); // Add logging
+        } catch (socialError) {
+            console.error("Error inserting Social Data:", socialError);
+            throw socialError; // Re-throw to trigger ROLLBACK
+        }
+    }
+
+    // Insert Company Revenue
+    if (companyRevenue) {
+        console.log("Inserting Revenue Data:", companyRevenue, "for Company ID:", companyId); // Add logging
+        try {
+            let parsedLatestFunding = null;
+            // Ensure date is valid before parsing
+            if (companyRevenue.latestFunding && typeof companyRevenue.latestFunding === 'string' && !isNaN(Date.parse(companyRevenue.latestFunding))) {
+                parsedLatestFunding = new Date(companyRevenue.latestFunding).toISOString().split('T')[0];
+            } else if (companyRevenue.latestFunding) {
+                 console.warn("Invalid date format for latestFunding:", companyRevenue.latestFunding);
+            }
+
+            let parsedLatestFundingAmount = null;
+            // Ensure amount is a potentially valid number string or number before parsing
+            if (companyRevenue.latestFundingAmount !== null && companyRevenue.latestFundingAmount !== undefined && companyRevenue.latestFundingAmount !== '') {
+                 const amount = parseFloat(companyRevenue.latestFundingAmount);
+                 if (!isNaN(amount)) {
+                     parsedLatestFundingAmount = amount;
+                 } else {
+                     console.warn("Invalid number format for latestFundingAmount:", companyRevenue.latestFundingAmount);
+                 }
+            }
+
+            revenueResult = await client.query(
+              `INSERT INTO companyrevenue ("Latest Funding", "Latest Funding Amount", companyid)
+               VALUES ($1, $2, $3)
+               RETURNING *`,
+              [
+                parsedLatestFunding, // Use parsed date or null
+                parsedLatestFundingAmount, // Use parsed amount or null
+                companyId // Use the companyId
+              ]
+            );
+            console.log("Revenue Data Inserted:", revenueResult.rows[0]); // Add logging
+        } catch (revenueError) {
+            console.error("Error inserting Revenue Data:", revenueError);
+            throw revenueError; // Re-throw to trigger ROLLBACK
+        }
+    }
 
     // Commit transaction if everything is successful
     await client.query('COMMIT');
 
-    res.status(201).json({
-      personalDetails: personalData,
-      companyDetails: companyResult.rows[0],
-      // Add other details similarly...
-    });
+    // Construct response object including newly inserted details
+    const responseData = {
+        message: "Client ajouté avec succès.",
+        personalDetails: personalData,
+        companyDetails: companyData,
+        ...(geoResult && { geoDetails: geoResult.rows[0] }),
+        ...(socialResult && { socialDetails: socialResult.rows[0] }),
+        ...(revenueResult && { revenueDetails: revenueResult.rows[0] })
+    };
+
+    res.status(201).json(responseData); // Send back the comprehensive success response
     
   } catch (error) {
     await client.query('ROLLBACK');
