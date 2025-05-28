@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;700&display=swap');
+
+#root {
+   margin: 0;
+   padding: 0;
+   font-size: 18px;
+   background-color: #333;
+   font-family: 'Inter', 'Roboto', 'Open Sans', system-ui, -apple-system, 'Segoe UI', Ubuntu, Cantarell, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+   color: #f5f5f5;
+   min-height: 100vh;
+}
+
+/* Titres */
+h1, .title-xl {
+   font-family: 'Inter', 'Roboto', 'Open Sans', sans-serif;
+   font-size: 2.5rem;
+   font-weight: 700;
+   margin-bottom: 0.75rem;
+   margin-top: 0.5rem;
+   color: #ffd166; /* Jaune doux pour contraste */
+}
+
+h2, .title-lg {
+   font-family: 'Inter', 'Roboto', 'Open Sans', sans-serif;
+   font-size: 2rem;
+   font-weight: 600;
+   margin-bottom: 0.5rem;
+   margin-top: 0.5rem;
+   color: #06d6a0; /* Vert turquoise */
+}
+
+h3, .title-md {
+   font-family: 'Inter', 'Roboto', 'Open Sans', sans-serif;
+   font-size: 1.5rem;
+   font-weight: 600;
+   margin-bottom: 0.3rem;
+   margin-top: 0.3rem;
+   color: #118ab2; /* Bleu doux */
+}
+
+/* Texte normal */
+body, p, .text {
+   font-family: 'Open Sans', 'Roboto', 'Inter', sans-serif;
+   font-size: 1rem;
+   font-weight: 400;
+   margin-bottom: 0.5rem;
+   color: #f5f5f5;
+}
+
+/* Boutons */
+button, .btn {
+   font-family: 'Inter', 'Roboto', 'Open Sans', sans-serif;
+   font-size: 1rem;
+   font-weight: 600;
+   padding: 0.5em 1.2em;
+   border-radius: 6px;
+   border: none;
+   background: #06d6a0;
+   color: #222;
+   cursor: pointer;
+   transition: background 0.2s, color 0.2s;
+   margin: 0.2em 0.5em 0.2em 0;
+}
+button:hover, .btn:hover {
+   background: #ffd166;
+   color: #222;
+}
+
+/* Icônes et éléments visuels */
+.icon, .iconify, svg {
+   vertical-align: middle;
+   color: #ffd166;
+   width: 1.2em;
+   height: 1.2em;
+   margin-right: 0.3em;
+   transition: color 0.2s;
+}
+.icon:hover, .iconify:hover, svg:hover {
+   color: #06d6a0;
+}
+
+/* Séparateurs et cartes */
+.divider {
+   border-bottom: 1px solid #444;
+   margin: 1.2em 0;
+}
+.card {
+   background: #222;
+   border-radius: 10px;
+   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+   padding: 1.5em;
+   margin-bottom: 1em;
+   border-left: 4px solid #ffd166;
+}
+
+/* Listes */
+ul, ol {
+   margin-left: 1.2em;
+   margin-bottom: 0.5em;
+}
+li {
+   margin-bottom: 0.2em;
+}
