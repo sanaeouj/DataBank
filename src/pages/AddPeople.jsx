@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import Papa from "papaparse";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 const importMapping = {
   "First Name": "firstName",
@@ -159,51 +159,54 @@ const AddPeople = () => {
     }
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     const fileExtension = file.name.split(".").pop().toLowerCase();
-    const reader = new FileReader();
 
-    reader.onload = (e) => {
-      const data = e.target.result;
-      try {
-        if (fileExtension === "csv") {
-          Papa.parse(data, {
-            header: true,
-            complete: (results) => {
-              console.log("Parsed CSV data:", results.data);
-              setFileData(results.data.filter(row => Object.keys(row).length > 0));
-            },
-            error: (error) => {
-              console.error("CSV parsing error:", error);
-              alert("Error parsing CSV file. Please check the file format.");
-            }
+    try {
+      if (fileExtension === "csv") {
+        Papa.parse(file, {
+          header: true,
+          complete: (results) => {
+            setFileData(results.data.filter(row => Object.keys(row).length > 0));
+          },
+          error: (error) => {
+            alert("Error parsing CSV file. Please check the file format.");
+          }
+        });
+      } else if (fileExtension === "xlsx" || fileExtension === "xls") {
+        // Utilisation d'ExcelJS pour lire le fichier Excel côté client
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(arrayBuffer);
+
+        const worksheet = workbook.worksheets[0];
+        const headers = [];
+        worksheet.getRow(1).eachCell((cell) => {
+          headers.push(cell.value);
+        });
+
+        const jsonData = [];
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+          if (rowNumber === 1) return; // Skip header row
+          const rowData = {};
+          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            const header = headers[colNumber - 1];
+            if (header) rowData[header] = cell.value;
           });
-        } else if (fileExtension === "xlsx" || fileExtension === "xls") {
-          const workbook = XLSX.read(data, { type: "binary" });
-          const sheetName = workbook.SheetNames[0];
-          const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-          console.log("Parsed Excel data:", jsonData);
-          setFileData(jsonData.filter(row => Object.keys(row).length > 0));
-        } else {
-          throw new Error("Unsupported file type");
-        }
-      } catch (error) {
-        console.error("File processing error:", error);
-        alert(`Error processing file: ${error.message}`);
+          if (Object.keys(rowData).length > 0) {
+            jsonData.push(rowData);
+          }
+        });
+
+        setFileData(jsonData);
+      } else {
+        throw new Error("Unsupported file type");
       }
-    };
-
-    reader.onerror = () => {
-      alert("Error reading file. Please try again.");
-    };
-
-    if (fileExtension === "csv") {
-      reader.readAsText(file);
-    } else {
-      reader.readAsBinaryString(file);
+    } catch (error) {
+      alert(`Error processing file: ${error.message}`);
     }
   };
 

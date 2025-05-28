@@ -20,6 +20,7 @@ import CustomToolbar from "./CustomToolbar";
 import EditDialog from "./EditDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ExcelJS from "exceljs";
 
 const ResultsTable = ({ data = [], filters }) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
@@ -466,28 +467,49 @@ const exportToCSV = () => {
   document.body.removeChild(link);
 };
 
- const exportToExcel = () => {
+ const exportToExcel = async () => {
   if (!filteredData.length) {
     alert("No data to export.");
     return;
   }
 
-   const headers = Object.keys(importMapping);
-  
-   const exportData = filteredData.map(row => {
-    const exportedRow = {};
-    headers.forEach(header => {
-      const fieldName = importMapping[header];
-      exportedRow[header] = row[fieldName] || '';
-    });
-    return exportedRow;
-  });
+  try {
+    const headers = Object.keys(importMapping);
 
-   const worksheet = XLSX.utils.json_to_sheet(exportData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-  
-   XLSX.writeFile(workbook, "databank_export.xlsx");
+     const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Data");
+
+     worksheet.addRow(headers);
+
+     filteredData.forEach(row => {
+      const rowData = headers.map(header => {
+        const fieldName = importMapping[header];
+        return row[fieldName] || '';
+      });
+      worksheet.addRow(rowData);
+    });
+
+     const buffer = await workbook.xlsx.writeBuffer();
+
+     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'databank_export.xlsx');
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error exporting to Excel:", error);
+    setSnackbar({
+      open: true,
+      message: "Failed to export to Excel",
+      severity: "error",
+    });
+  }
 };
   const SettingsDialog = () => (
     <Dialog
